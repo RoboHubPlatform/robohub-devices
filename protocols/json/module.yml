@@ -1,0 +1,42 @@
+module:
+  name: robohub-json
+  type: middleware
+  version: 0.1.0
+  description: >
+    A small lookup for named fields in a JSON document, as an IP device's status
+    reply arrives. No tree, no allocation, no C-library float parser.
+  maintainer: "Aurel Miron"
+  license: "MIT"
+  created: "2026-10-14"
+
+build:
+  language: c
+  standard: c11
+  include_dirs:
+    - inc
+  sources:
+    - src/json.c
+
+config:
+  dialect: linux
+  kconfig_fragments:
+    - Kconfig
+
+exports:
+  headers:
+    - robohub/protocols/json.h
+  cmake:
+    target: "rho::robohub-json"
+    include_dirs:
+      - inc
+
+package:
+  kind: library
+  binary: false
+
+metadata:
+  tags:
+    - middleware
+    - json
+  stability: experimental
+  visibility: public

@@ -1,0 +1,11 @@
+menu "RoboHub Modbus"
+
+config RH_MODBUS
+    bool "Modbus RTU master"
+    select RH_HAL_RS485
+    default n
+    help
+      A Modbus RTU master over the RS485 HAL. A device module that reads a
+      Modbus device selects this; nothing else pays for it.
+
+endmenu

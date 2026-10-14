@@ -1,0 +1,11 @@
+menu "RoboHub Growatt inverter"
+
+config RH_DEV_GROWATT_ES
+    bool "Growatt SPH/ES hybrid inverter (Modbus)"
+    select RH_MODBUS
+    default n
+    help
+      A Growatt hybrid inverter read over Modbus RTU, presenting the
+      RoboHubInverter device interface.
+
+endmenu

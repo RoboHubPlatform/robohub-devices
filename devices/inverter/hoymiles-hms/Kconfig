@@ -1,0 +1,13 @@
+menu "RoboHub Hoymiles inverter"
+
+config RH_DEV_HOYMILES_HMS
+    bool "Hoymiles microinverter via OpenDTU (HTTP)"
+    select RH_HTTP
+    select RH_JSON
+    select RH_NET
+    default n
+    help
+      A Hoymiles microinverter read through an OpenDTU's HTTP status document,
+      presenting the RoboHubInverter device interface.
+
+endmenu
