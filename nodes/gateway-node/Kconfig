@@ -1,0 +1,33 @@
+# gateway-node — the device node's configuration.
+
+config RH_HAL_UART
+    bool "UART"
+    default y
+
+config RH_HAL_RS485
+    bool "RS485"
+    default y
+
+config RH_HAL_TIMER
+    bool "Timer"
+    default y
+
+config RH_HAL_GPIO
+    bool "GPIO"
+    default y
+
+config RH_NET
+    bool "Network"
+    default y
+
+config RH_BOARD_MAX485_MODULE
+    bool "MAX485 RS485 transceiver carrier"
+    default y
+
+config RH_DEV_GROWATT_ES
+    bool "Growatt SPH/ES hybrid inverter"
+    default y
+
+config RH_DEV_HOYMILES_HMS
+    bool "Hoymiles microinverter via OpenDTU"
+    default y

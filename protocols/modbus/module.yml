@@ -1,0 +1,54 @@
+module:
+  name: robohub-modbus
+  type: middleware
+  version: 0.1.0
+  description: >
+    Modbus RTU master over the RoboHub RS485 HAL. Carries registers and knows
+    nothing about what they mean, so a Growatt or any other Modbus device is read
+    by a device module above it.
+  maintainer: "Aurel Miron"
+  license: "MIT"
+  created: "2026-10-14"
+
+build:
+  language: c
+  standard: c11
+  include_dirs:
+    - inc
+  sources:
+    - src/modbus.c
+
+depends:
+  - name: robohub-common
+    type: c
+    path: /home/miraur/projects/robohub-common
+    git: https://github.com/RoboHubPlatform/robohub-common
+    branch: main
+
+config:
+  dialect: linux
+  kconfig_fragments:
+    - Kconfig
+
+exports:
+  headers:
+    - robohub/protocols/modbus.h
+  cmake:
+    target: "rho::robohub-modbus"
+    include_dirs:
+      - inc
+    link_libraries:
+      - rho::robohub-common
+
+package:
+  kind: library
+  binary: false
+
+metadata:
+  tags:
+    - middleware
+    - modbus
+    - rs485
+    - protocol
+  stability: experimental
+  visibility: public

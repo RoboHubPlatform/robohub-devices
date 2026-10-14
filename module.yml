@@ -1,0 +1,38 @@
+#
+# robohub-devices — integrations for equipment the ecosystem does not sense.
+#
+# A collection: what it carries are device integrations and the protocol clients
+# they are built on, each a module of its own.
+#
+# @project RoboHub Platform
+# @license MIT
+#
+
+module:
+  name: robohub-devices
+  type: collection
+  version: 0.1.0
+  description: >
+    Device integrations for the RoboHub Platform: inverters, meters and other
+    equipment spoken to over a protocol of its own, read into the common device
+    interfaces and published to a gateway.
+
+# What this repository carries, for a reader and for tooling. A module is built
+# and depended on from where it sits.
+modules:
+  - protocols/modbus
+  - protocols/http
+  - protocols/json
+  - devices/inverter/growatt-es
+  - devices/inverter/hoymiles-hms
+  - nodes/gateway-node
+
+metadata:
+  tags:
+    - collection
+    - devices
+    - inverter
+    - modbus
+    - http
+  stability: experimental
+  visibility: public

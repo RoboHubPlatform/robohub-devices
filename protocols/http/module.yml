@@ -1,0 +1,53 @@
+module:
+  name: robohub-http
+  type: middleware
+  version: 0.1.0
+  description: >
+    A small HTTP GET over the RoboHub network contract: one request to one path,
+    the body returned. For reading a device that answers over IP, such as an
+    OpenDTU fronting a Hoymiles microinverter.
+  maintainer: "Aurel Miron"
+  license: "MIT"
+  created: "2026-10-14"
+
+build:
+  language: c
+  standard: c11
+  include_dirs:
+    - inc
+  sources:
+    - src/http_client.c
+
+depends:
+  - name: robohub-common
+    type: c
+    path: /home/miraur/projects/robohub-common
+    git: https://github.com/RoboHubPlatform/robohub-common
+    branch: main
+
+config:
+  dialect: linux
+  kconfig_fragments:
+    - Kconfig
+
+exports:
+  headers:
+    - robohub/protocols/http_client.h
+  cmake:
+    target: "rho::robohub-http"
+    include_dirs:
+      - inc
+    link_libraries:
+      - rho::robohub-common
+
+package:
+  kind: library
+  binary: false
+
+metadata:
+  tags:
+    - middleware
+    - http
+    - network
+  stability: experimental
+  visibility: public

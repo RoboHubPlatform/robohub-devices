@@ -1,0 +1,10 @@
+menu "RoboHub JSON"
+
+config RH_JSON
+    bool "JSON field reader"
+    default n
+    help
+      A small reader for named fields of a JSON document, for an IP device's
+      status reply.
+
+endmenu

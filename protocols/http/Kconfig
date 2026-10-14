@@ -1,0 +1,11 @@
+menu "RoboHub HTTP"
+
+config RH_HTTP
+    bool "HTTP client"
+    select RH_NET
+    default n
+    help
+      A small HTTP GET over the network contract, for reading a device that
+      answers over IP.
+
+endmenu

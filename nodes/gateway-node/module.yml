@@ -1,0 +1,127 @@
+#
+# gateway-node — publish a device's power reading to a RoboHub gateway.
+#
+# A Growatt over RS485 Modbus or a Hoymiles through an OpenDTU, read and
+# published as a `PowerReading` frame, so the gateway lists the inverter like any
+# other device. Which device and where everything is come from the environment;
+# see src/main.c. Runs on robohub-linux (or a board with the same HALs).
+#
+#     rho build -target native .
+#
+# @project RoboHub Platform
+# @license MIT
+#
+
+module:
+  name: robohub-device-gateway-node
+  type: module
+  version: 0.1.0
+  description: >
+    A device node: reads an inverter through robohub-devices and publishes the
+    reading to a RoboHub gateway as a PowerReading frame.
+  maintainer: "Aurel Miron"
+  license: "MIT"
+  created: "2026-10-14"
+
+main: src/main.c
+
+build:
+  language: c
+  standard: c11
+  sources:
+    - src/main.c
+    # The schema's payloads, generated from schemas/link.rho. The same schema
+    # generates the gateway's Rho, so both ends write one PowerReading layout.
+    - src/protocol/protocol.c
+  output_dir: output
+  presets:
+    - native
+
+depends:
+  - name: robohub-linux
+    type: c
+    path: /home/miraur/projects/robohub-linux
+    git: https://github.com/RoboHubPlatform/robohub-linux
+    branch: main
+  - name: robohub-common
+    type: c
+    path: /home/miraur/projects/robohub-common
+    git: https://github.com/RoboHubPlatform/robohub-common
+    branch: main
+  - name: robohub-transport
+    type: c
+    path: /home/miraur/projects/robohub-transport
+    git: https://github.com/RoboHubPlatform/robohub-transport
+    branch: main
+  - name: max485-module
+    type: c
+    path: /home/miraur/projects/robohub-drivers/boards/max485-module
+  - name: robohub-modbus
+    type: c
+    path: /home/miraur/projects/robohub-devices/protocols/modbus
+  - name: robohub-http
+    type: c
+    path: /home/miraur/projects/robohub-devices/protocols/http
+  - name: robohub-json
+    type: c
+    path: /home/miraur/projects/robohub-devices/protocols/json
+  - name: robohub-device-growatt-es
+    type: c
+    path: /home/miraur/projects/robohub-devices/devices/inverter/growatt-es
+  - name: robohub-device-hoymiles-hms
+    type: c
+    path: /home/miraur/projects/robohub-devices/devices/inverter/hoymiles-hms
+
+c_connection:
+  library: "robohub-linux"
+  headers:
+    - platform.h
+    - robohub/net.h
+  include_dirs:
+    - /home/miraur/projects/robohub-devices/nodes/gateway-node/src/protocol
+    - /home/miraur/projects/robohub-linux/include
+    - /home/miraur/projects/robohub-common/include
+    - /home/miraur/projects/robohub-common/include/robohub/hal
+    - /home/miraur/projects/robohub-common/include/robohub/drivers
+    - /home/miraur/projects/robohub-common/include/robohub/devices
+    - /home/miraur/projects/robohub-transport/include
+    - /home/miraur/projects/robohub-drivers/boards/max485-module/bsp
+    - /home/miraur/projects/robohub-devices/protocols/modbus/inc
+    - /home/miraur/projects/robohub-devices/protocols/http/inc
+    - /home/miraur/projects/robohub-devices/protocols/json/inc
+    - /home/miraur/projects/robohub-devices/devices/inverter/growatt-es/inc
+    - /home/miraur/projects/robohub-devices/devices/inverter/hoymiles-hms/inc
+  variants:
+    native:
+      libraries:
+        - robohub-common
+        - robohub-transport
+        - robohub-modbus
+        - robohub-http
+        - robohub-json
+        - robohub-device-growatt-es
+        - robohub-device-hoymiles-hms
+        - robohub-board-max485-module
+
+config:
+  dialect: linux
+  kconfig_fragments:
+    - Kconfig
+  values_file: project.conf
+
+package:
+  kind: library
+  binary: false
+
+metadata:
+  tags:
+    - node
+    - inverter
+    - growatt
+    - hoymiles
+    - modbus
+    - opendtu
+    - linux
+    - host
+  stability: experimental
+  visibility: public
