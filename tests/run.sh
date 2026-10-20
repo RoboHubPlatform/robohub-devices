@@ -34,6 +34,8 @@ cp "$DEV/protocols/http/inc/http_client.h"       "$GEN/robohub/protocols/http_cl
 cp "$DEV/protocols/json/inc/json.h"              "$GEN/robohub/protocols/json.h"
 cp "$DEV/devices/inverter/growatt-es/inc/growatt.h"  "$GEN/robohub/devices/inverter/growatt.h"
 cp "$DEV/devices/inverter/hoymiles-hms/inc/hoymiles.h" "$GEN/robohub/devices/inverter/hoymiles.h"
+mkdir -p "$GEN/robohub/devices/actuator"
+cp "$DEV/devices/actuator/relay/inc/relay.h"     "$GEN/robohub/devices/actuator/relay.h"
 
 PROTO="$DEV/nodes/gateway-node/src/protocol"
 
@@ -53,10 +55,13 @@ $CC -std=gnu11 -Wall -Wextra -I"$GEN" -I"$DEV/protocols/http/inc" \
     "$DEV/protocols/json/src/json.c" "$DEV/devices/inverter/hoymiles-hms/src/hoymiles.c" \
     "$ROBOHUB_LINUX_DIR/src/linux_net.c" "$ROBOHUB_COMMON_DIR/src/platform/net.c" \
     "$ROBOHUB_COMMON_DIR/src/error.c" -lpthread -o "$OUT/test_hoymiles"
+$CC -std=c11 -Wall -Wextra -I"$GEN" -I"$DEV/devices/actuator/relay/inc" $BASE \
+    "$DEV/tests/test_relay.c" "$DEV/devices/actuator/relay/src/relay.c" -o "$OUT/test_relay"
 
 run test_modbus "$OUT/test_modbus"
 run test_json "$OUT/test_json"
 run test_growatt "$OUT/test_growatt"
 run test_hoymiles "$OUT/test_hoymiles"
+run test_relay "$OUT/test_relay"
 
 printf '\nall device tests passed\n'

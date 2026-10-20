@@ -23,9 +23,13 @@ modules:
   - protocols/modbus
   - protocols/http
   - protocols/json
+  - runtime/device-node
   - devices/inverter/growatt-es
   - devices/inverter/hoymiles-hms
+  - devices/actuator/relay
+  - apps/smart-plug
   - nodes/gateway-node
+  - tests/smart-plug-node
 
 metadata:
   tags:

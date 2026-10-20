@@ -1,0 +1,14 @@
+menu "RoboHub device node runtime"
+
+config RH_DEVICE_NODE
+    bool "Device node runtime"
+    select RH_CORE
+    select RH_TRANSPORT
+    select RH_TELEMETRY
+    default n
+    help
+      The runtime a device node is built on: the link, the telemetry bridge,
+      publishing a reading and dispatching a control request to the device it
+      names.
+
+endmenu

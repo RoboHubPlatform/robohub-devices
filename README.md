@@ -27,13 +27,19 @@ protocols/
     modbus/     Modbus RTU master over the RS485 HAL
     http/       a small HTTP GET over the network contract
     json/       a field reader for a JSON document
+runtime/
+    device-node/    the runtime a device node is built on: link, publish, dispatch
 devices/
     inverter/
         growatt-es/     a Growatt SPH/ES hybrid over Modbus
         hoymiles-hms/   a Hoymiles microinverter through an OpenDTU
+    actuator/
+        relay/          a relay (on/off output) over a GPIO
+apps/
+    smart-plug/     a custom device: a temperature sensor and a relay composed
 nodes/
-    gateway-node/       poll a device, publish a PowerReading to a gateway
-tests/                  host tests for the protocols and the devices
+    gateway-node/   poll a device, publish a PowerReading to a gateway
+tests/              host tests for the protocols, the devices and the runtime
 ```
 
 ## The devices
@@ -63,6 +69,30 @@ grid meter and no load, so those are absent rather than zero.
 
 The two DC inputs (the two panels) are inputs to the inverter, not devices of
 their own, and the document's `total` object is what is read.
+
+## Reading and control
+
+A device is not only read. Beside the interfaces that report a measurement
+(`RoboHubTemperature`, `RoboHubInverter`) there are ones a program drives:
+`RoboHubSwitch` (on/off, e.g. a relay) and `RoboHubActuator` (a value, e.g. a
+setpoint). A smart plug is a temperature sensor and a switch in one device.
+
+A command is the control family the ecosystem already carries — an opcode and an
+argument, addressed to a device by its area and node — so it reaches a device
+whether it is wired to the gateway or behind a relay. The opcodes are shared
+(`SET_SAMPLING_RATE` 1, `SET_SWITCH` 2, `SET_SETPOINT` 3; a device's own begin at
+`VENDOR_BASE`, 256). The gateway sends them and a node answers with the value it
+actually reached, so a command and the state that follows do not drift.
+
+## Custom applications
+
+An application that composes parts that already exist — a sensor here, a relay
+there — is written against the `robohub-device-node` runtime: it supplies what it
+reads and what a command does, and the runtime carries the link, the framing, the
+publishing and the dispatch. `apps/smart-plug` is the example — a DS18B20 and a
+GPIO relay as one switchable, temperature-reporting device — and it builds for a
+Pico, a relay or a gateway the same way, because it names interfaces and opcodes
+and never the wire.
 
 ## The node
 
@@ -105,8 +135,9 @@ RH_DEVICE=hoymiles RH_OPENDTU_HOST=192.168.1.50 AREA=7 NODE=21 ./gateway-node
 
 The protocols and the devices have host tests under `tests/`: the Modbus framing
 and its failures, the JSON reader's nesting and its accuracy, the Growatt decode
-(with a test map, independent of the default), and the Hoymiles read over a real
-loopback socket through the real HTTP client.
+(with a test map, independent of the default), the Hoymiles read over a real
+loopback socket through the real HTTP client, and the relay's wiring and
+read-back.
 
 ```sh
 ROBOHUB_COMMON_DIR=/path/to/robohub-common \
@@ -122,6 +153,13 @@ inverter simulated — the whole chain except the hardware:
 GATEWAY_BIN=/path/to/robohub-gateway tests/e2e_power.py
 # Modbus slave (pty) -> node (RS485 + Modbus + Growatt) -> gateway -> listing
 GATEWAY_BIN=/path/to/robohub-gateway tests/e2e_growatt.py
+# fake DS18B20 + GPIO -> smart plug (real composition) -> gateway over a pty,
+# with a switch command going down the link and the state coming back up
+GATEWAY_BIN=/path/to/robohub-gateway tests/e2e_smart_plug.py
 ```
+
+The smart-plug test runs `tests/smart-plug-node`, the real composition and drivers
+over fakes for the two parts a host does not have; it is built with
+`rho build -target native .`.
 
 For bringing the real hardware up, see [docs/runbook.md](docs/runbook.md).

@@ -54,10 +54,19 @@ GATEWAY_MODE=master GATEWAY_AREA=7 PLOTJUGGLER_ADDR=127.0.0.1:9870 \
     ./build/robohub-gateway
 ```
 
-- `GET /api/v1/nodes` — every device, with power/energy for the inverters.
+- `GET /api/v1/nodes` — every device, with power/energy for the inverters, and
+  switch/setpoint for a device that has them.
 - `GET /api/v1/telemetry/power` — the newest power reading.
 - `GET /api/v1/telemetry/temperature` — the newest temperature reading.
+- `GET /api/v1/telemetry/state` — the newest device state (a switch, a setpoint).
+- `POST /api/v1/nodes/{area}/{node}/switch` — drive a switch: `{"on":true}`.
+- `POST /api/v1/nodes/{area}/{node}/command` — any opcode and argument:
+  `{"opcode":2,"argument":1}`. A device's own opcodes begin at 256.
 - `GET /api/v1/diagnostics` — the gateway's own state.
+
+A command answers with what the device reached (`{"success":true,"opcode":2,
+"actual":1}`), routed to the device whether it is wired to the gateway or behind
+a relay.
 
 A device node usually publishes over the gateway's **serial** link (the L2 path).
 For the inverter node that link is the node's own UART (`RH_NODE_UART`), wired to
@@ -144,6 +153,42 @@ RH_NODE_LINK=tcp RH_GATEWAY_HOST=127.0.0.1 RH_GATEWAY_PORT=8081 \
 A microinverter has no battery, grid meter or load, so those fields are absent
 (`valid` says which figures are present); the battery attached to the Growatt is
 read through the Growatt.
+
+## Custom apps and control
+
+A custom device — a smart plug, a thermostat, anything composed of parts the
+ecosystem already has — is an application in `robohub-devices/apps/` built on the
+`robohub-device-node` runtime. It reads what it can read, drives what it can
+drive, and answers commands by opcode; the runtime carries the link, the framing
+and the messages, so the application names no protocol.
+
+`apps/smart-plug` composes a DS18B20 and a GPIO relay into one device: it
+publishes a temperature reading and the switch's state, and answers `SET_SWITCH`
+with the state the relay reached. It is configured to the wiring by defines
+(`RH_SMART_PLUG_UART`, `_GPIO`, `_RELAY_PIN`, `_RELAY_ACTIVE_HIGH`) and to the
+gateway by `_AREA`/`_NODE`.
+
+```sh
+cd <...>/robohub-devices/apps/smart-plug && rho build -target pico2w .
+# flash build/output/smart-plug.uf2, then from anywhere:
+curl -X POST http://<gateway>:8080/api/v1/nodes/1/20/switch -d '{"on":true}'
+curl http://<gateway>:8080/api/v1/nodes      # the device shows switch_state
+```
+
+The runtime answers `SET_SAMPLING_RATE` itself; the application answers its own
+opcodes, which begin at 256 so they cannot collide with a core one.
+
+Before the board, the composition is proven on the host: `tests/smart-plug-node`
+is the real composition and the real drivers over a fake GPIO and a simulated
+DS18B20, and `tests/e2e_smart_plug.py` runs it against the real gateway over a
+pty — it lists the device, sends a switch command, and reads the state back. If
+that passes, what is left on the board is the wiring.
+
+```sh
+cd <...>/robohub-devices/tests/smart-plug-node && rho build -target native .
+cd <...>/robohub-devices
+GATEWAY_BIN=<...>/robohub-gateway/build/robohub-gateway python3 tests/e2e_smart_plug.py
+```
 
 ## Bring-up order
 
