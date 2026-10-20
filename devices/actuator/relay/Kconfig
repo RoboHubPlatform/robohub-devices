@@ -1,0 +1,11 @@
+menu "RoboHub relay"
+
+config RH_DEV_RELAY
+    bool "Relay (GPIO switch)"
+    select RH_HAL_GPIO
+    default n
+    help
+      A relay or any on/off output over a GPIO, presenting the RoboHubSwitch
+      interface.
+
+endmenu

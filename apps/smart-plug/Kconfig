@@ -1,0 +1,45 @@
+# smart-plug — the custom device's configuration.
+
+config RH_HAL_UART
+    bool "UART"
+    default y
+
+config RH_HAL_GPIO
+    bool "GPIO"
+    default y
+
+config RH_HAL_TIMER
+    bool "Timer"
+    default y
+
+config RH_HAL_ONEWIRE
+    bool "OneWire"
+    default y
+
+config RH_CORE
+    bool "Runtime (robohub-core)"
+    default y
+
+config RH_TRANSPORT
+    bool "Transport framing"
+    default y
+
+config RH_TELEMETRY
+    bool "Telemetry bridge"
+    default y
+
+config RH_DEVICE_NODE
+    bool "Device node runtime"
+    default y
+
+config RH_DEV_RELAY
+    bool "Relay (GPIO switch)"
+    default y
+
+config RH_DRV_DS18B20
+    bool "DS18B20 temperature driver"
+    default y
+
+config RH_BOARD_PICO_2W
+    bool "Pico 2W"
+    default y

@@ -1,0 +1,233 @@
+module common
+
+// The identity and the families both protocol levels share.
+//
+// A message means the same thing at either level, so what is common to L2
+// (board <-> gateway) and L1 (gateway <-> gateway) is written once, here, and
+// both levels include it. The alternative — the identity declared in each level
+// — is two definitions of one device id, and two definitions are two things to
+// keep in step.
+//
+// One `MessageId` numbers the whole wire. A value shared by two names is one
+// message with two names at the two levels: `HELLO` and `ANNOUNCE` are both
+// 0x0101, `TELEMETRY` and `READING` are both 0x0201. The aliases say so rather
+// than numbering the same thing twice.
+
+namespace robohub.v1
+
+// The transport header's msg_id. The values are decimal because a schema enum
+// takes a decimal literal; the hex each one stands for is in the comment.
+enum MessageId {
+    HELLO = 257                     // 0x0101, L2: a board announces itself
+    ANNOUNCE = 257                  // 0x0101, L1: a gateway announces itself
+    TELEMETRY = 513                 // 0x0201, L2: a board's reading
+    READING = 513                   // 0x0201, L1: a reading carried up
+    POWER_READING = 514             // 0x0202, both levels: a power device's reading
+    STATE_READING = 515             // 0x0203, both levels: a device's state
+    CONTROL_REQUEST = 769           // 0x0301
+    CONTROL_RESPONSE = 770          // 0x0302
+    DIAG_REQUEST = 1025             // 0x0401
+    DIAG_RESPONSE = 1026            // 0x0402
+}
+
+enum NodeStatus {
+    OK = 0
+    FAULT = 1
+}
+
+// What a device or a gateway can do, as a set of bits.
+enum Capability {
+    NONE = 0
+    SENSING = 1
+    GATEWAY = 2
+    DIAGNOSTICS = 4
+    UPLINK = 8
+}
+
+// Which stack a device runs, so a gateway can say what it is talking to.
+enum Platform {
+    UNKNOWN = 0
+    PICO = 1
+    ESP32 = 2
+    STM32 = 3
+    LINUX = 4
+    WINDOWS = 5
+}
+
+// How a device is used, matching the operating modes.
+enum Mode {
+    NODE = 0
+    EDGE = 1
+    RELAY = 2
+    MASTER = 3
+}
+
+// How one hardware probe came out. A probe listed in neither mask is absent.
+enum ProbeResult {
+    ABSENT = 0
+    OK = 1
+    FAULT = 2
+}
+
+// The probe set a smoke checks, one bit each. A platform answers for the probes
+// it has; the rest are absent rather than failed.
+enum ProbeId {
+    CONSOLE = 0
+    TIMER = 1
+    ONEWIRE = 2
+    I2C = 3
+    SPI = 4
+    GPIO = 5
+    UART = 6
+    NET = 7
+}
+
+// What kind of device a reading is of. A gateway lists devices by kind, so an
+// inverter and a meter are told apart without the part number being known.
+enum DeviceKind {
+    UNKNOWN = 0
+    INVERTER = 1
+    METER = 2
+    SENSOR = 3
+    GATEWAY = 4
+    BATTERY = 5
+    SWITCH = 6
+    ACTUATOR = 7
+}
+
+// Which figures a state reading carries, one bit each. The same idea as
+// PowerField: a bit that is clear means the device has no such state.
+enum StateField {
+    SWITCH_STATE = 1
+    SETPOINT = 2
+}
+
+// The commands a device may be sent: the control family is an opcode and an
+// argument, and this is the vocabulary both ends share. Opcodes 1..255 are the
+// ecosystem's; a device's own begin at 256 (VENDOR_BASE) so a custom command
+// cannot collide with one the core knows.
+enum ControlOpcode {
+    SET_SAMPLING_RATE = 1
+    SET_SWITCH = 2
+    SET_SETPOINT = 3
+    VENDOR_BASE = 256
+}
+
+// Which figures a power reading carries, one bit each. A bit that is clear means
+// the device has no such figure, which is not the same as reporting zero: an
+// inverter generates nothing at night, but a microinverter has no battery at all.
+enum PowerField {
+    PV_POWER = 1
+    LOAD_POWER = 2
+    GRID_POWER = 4
+    BATTERY_POWER = 8
+    BATTERY_SOC = 16
+    ENERGY_TODAY = 32
+    ENERGY_TOTAL = 64
+}
+
+// A device, unique across an area: the area a gateway owns, and the node within
+// it. `node_id` is what a board already sets; `area_id` is assigned by the
+// gateway, so two boards with the same node id in different areas are two
+// devices.
+message DeviceId {
+    area_id: u16
+    node_id: u16
+}
+
+// A gateway, unique across the whole tree: the area it owns and the gateways
+// that share it.
+message GatewayId {
+    area_id: u16
+    link_id: u16
+}
+
+// A diagnostic request: which probes to run, as a mask of ProbeId. A device and
+// a gateway answer the same request about themselves.
+message DiagRequest {
+    device: DeviceId
+    mask: u32
+}
+
+// A diagnostic response: the runtime's counters and the smoke's outcome.
+//
+// `probe_ok` and `probe_fault` are masks of ProbeId. A probe set in neither is
+// absent — the platform has no such device — which is a fact rather than a
+// failure, so absence is its own answer and not a fault.
+message DiagResponse {
+    device: DeviceId
+    uptime_ms: u32
+    events_published: u32
+    handler_errors: u32
+    tasks_run: u32
+    task_errors: u32
+    last_error: u16
+    probe_ok: u32
+    probe_fault: u32
+}
+
+// A control request is a command addressed to a device, with an opcode and one
+// argument. Sampling rate is opcode 1; the family is general so a new command
+// does not need a new message id.
+message ControlRequest {
+    device: DeviceId
+    opcode: u16
+    argument: u32
+}
+
+message ControlResponse {
+    device: DeviceId
+    opcode: u16
+    result: u16
+    argument: u32
+}
+
+// One device's power and energy at one moment, at either level.
+//
+// This is the measurement a power device sends — an inverter, a meter — as
+// `Telemetry` is the measurement a sensor sends. It is a message of its own
+// rather than more fields on `Telemetry` because the two are different
+// statements: a sensor reports one figure, a power device reports a set of them
+// and which of the set it has (`valid`, a mask of `PowerField`). A relay carries
+// one up exactly as it carries a `Reading`, by re-framing it unchanged, because
+// the level is which schema names a message and not what its fields mean.
+//
+// Sign conventions, so a consumer need not know the part: `grid_power_w` is
+// positive importing and negative exporting, and `battery_power_w` is positive
+// charging and negative discharging. `pv_power_w` and `load_power_w` are
+// non-negative. A field whose bit is clear in `valid` is absent and is not read.
+message PowerReading {
+    device: DeviceId
+    timestamp_ms: u32
+    kind: DeviceKind
+    status: u16
+    valid: u16
+    pv_power_w: f32
+    load_power_w: f32
+    grid_power_w: f32
+    battery_power_w: f32
+    battery_soc: f32
+    energy_today_kwh: f32
+    energy_total_kwh: f32
+}
+
+// A device's state: what it is, as opposed to what it measures. A switch's
+// on/off, an actuator's setpoint. A program reads a temperature or a power with
+// Telemetry or PowerReading; it reads what a controllable device *is* with this,
+// and commands it with a ControlRequest carrying a ControlOpcode.
+//
+// State and measurement are apart on purpose: an inverter measures power and has
+// no state to command; a relay has a state and measures nothing; a smart plug has
+// both, and reports them in the message each belongs to. `valid` is a mask of
+// StateField, so an actuator's reading and a switch's are the same shape.
+//
+// `switch_state` is 0 or 1; `setpoint` is the actuator's value in its own units.
+message StateReading {
+    device: DeviceId
+    timestamp_ms: u32
+    kind: DeviceKind
+    status: u16
+    valid: u16
+    switch_state: u16
+    setpoint: f32
+}

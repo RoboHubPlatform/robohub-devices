@@ -1,0 +1,78 @@
+module:
+  name: robohub-device-node
+  type: runtime
+  version: 0.1.0
+  description: >
+    The runtime a device node is built on: the link and its framing, the
+    telemetry bridge, publishing a reading, and dispatching a control request to
+    the device it names. An application supplies its poll and its command
+    handlers and never sees the wire.
+  maintainer: "Aurel Miron"
+  license: "MIT"
+  created: "2026-10-16"
+
+build:
+  language: c
+  standard: c11
+  include_dirs:
+    - inc
+  sources:
+    - src/device_node.c
+    # The runtime carries the schema's payloads, so an application is written
+    # against interfaces and opcodes and never generates or links a protocol of
+    # its own.
+    - src/protocol/protocol.c
+
+depends:
+  - name: robohub-common
+    type: c
+    path: /home/miraur/projects/robohub-common
+    git: https://github.com/RoboHubPlatform/robohub-common
+    branch: main
+  - name: robohub-core
+    type: c
+    path: /home/miraur/projects/robohub-core
+    git: https://github.com/RoboHubPlatform/robohub-core
+    branch: main
+  - name: robohub-transport
+    type: c
+    path: /home/miraur/projects/robohub-transport
+    git: https://github.com/RoboHubPlatform/robohub-transport
+    branch: main
+  - name: robohub-telemetry
+    type: c
+    path: /home/miraur/projects/robohub-telemetry
+    git: https://github.com/RoboHubPlatform/robohub-telemetry
+    branch: main
+
+config:
+  dialect: linux
+  kconfig_fragments:
+    - Kconfig
+
+exports:
+  headers:
+    - robohub/device-node/device_node.h
+  cmake:
+    target: "rho::robohub-device-node"
+    include_dirs:
+      - inc
+    link_libraries:
+      - rho::robohub-common
+      - rho::robohub-core
+      - rho::robohub-transport
+      - rho::robohub-telemetry
+
+package:
+  kind: library
+  binary: false
+
+metadata:
+  tags:
+    - runtime
+    - device
+    - node
+    - telemetry
+    - control
+  stability: experimental
+  visibility: public

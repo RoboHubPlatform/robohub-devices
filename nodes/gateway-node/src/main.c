@@ -244,6 +244,9 @@ int main(void)
             emit("robohub-device-node: the link UART was not registered\n");
             return 1;
         }
+        if (g_link.uart->init != NULL) {
+            (void)g_link.uart->init(g_link.uart, 115200u);
+        }
     }
 
     RoboHubTransportPhy phy = { .write = link_write, .context = &g_link };

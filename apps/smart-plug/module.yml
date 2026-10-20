@@ -1,0 +1,115 @@
+#
+# smart-plug — a temperature sensor and a relay, as one device.
+#
+# A custom application composed of parts that already exist, run through the
+# device-node runtime: it reads a DS18B20 and drives a GPIO relay, publishes a
+# temperature reading and the switch's state, and answers a switch command. It is
+# added to a node the way any device is, and the gateway lists and commands it.
+#
+#     rho build -target pico2w .
+#
+# @project RoboHub Platform
+# @license MIT
+#
+
+module:
+  name: smart-plug
+  type: module
+  version: 0.1.0
+  description: >
+    A custom device: a DS18B20 temperature sensor and a GPIO relay composed into
+    one switchable, temperature-reporting device, published to a RoboHub gateway.
+  maintainer: "Aurel Miron"
+  license: "MIT"
+  created: "2026-10-16"
+
+main: src/main.c
+
+build:
+  language: c
+  standard: c11
+  include_dirs:
+    - inc
+  sources:
+    - src/main.c
+    - src/smart_plug.c
+  output_dir: output
+  presets:
+    - pico2w
+
+depends:
+  - name: robohub-pico
+    type: c
+    path: /home/miraur/projects/robohub-pico
+    git: https://github.com/RoboHubPlatform/robohub-pico
+    branch: main
+  - name: robohub-common
+    type: c
+    path: /home/miraur/projects/robohub-common
+    git: https://github.com/RoboHubPlatform/robohub-common
+    branch: main
+  - name: robohub-device-node
+    type: c
+    path: /home/miraur/projects/robohub-devices/runtime/device-node
+  - name: robohub-device-relay
+    type: c
+    path: /home/miraur/projects/robohub-devices/devices/actuator/relay
+  - name: robohub-driver-ds18b20
+    type: c
+    path: /home/miraur/projects/robohub-drivers/drivers/temperature/ds18b20
+
+c_connection:
+  # A C application, not a Rho module, but the headers are still what make the
+  # build record the platform board's sources — without them the Pico's board
+  # support package is never compiled and its HALs are never registered. The
+  # application's own includes come from the dependency targets; these are the
+  # platform's, and are the ones the cimport reader can read.
+  library: "robohub-pico"
+  headers:
+    - platform.h
+    - console.h
+    - gpio.h
+    - timer.h
+    - onewire.h
+    - registry.h
+    - error.h
+    - types.h
+  include_dirs:
+    - /home/miraur/projects/robohub-pico/include
+    - /home/miraur/projects/robohub-pico/include/robohub/hal
+    - /home/miraur/projects/robohub-pico/include/robohub/platform
+    - /home/miraur/projects/robohub-common/include
+    - /home/miraur/projects/robohub-common/include/robohub/hal
+    - /home/miraur/projects/robohub-common/include/robohub/drivers
+    - /home/miraur/projects/robohub-common/include/robohub/devices
+    # The application's own header, smart_plug.h.
+    - /home/miraur/projects/robohub-devices/apps/smart-plug/inc
+  variants:
+    pico2w:
+      libraries:
+        - robohub-common
+        - robohub-device-node
+        - robohub-device-relay
+        - robohub-driver-ds18b20
+
+config:
+  dialect: linux
+  kconfig_fragments:
+    - Kconfig
+  values_file: project.conf
+
+package:
+  kind: library
+  binary: false
+
+metadata:
+  tags:
+    - application
+    - device
+    - smart-plug
+    - relay
+    - switch
+    - temperature
+    - pico
+  stability: experimental
+  visibility: public

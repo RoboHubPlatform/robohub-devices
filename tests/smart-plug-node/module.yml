@@ -1,0 +1,99 @@
+#
+# smart-plug-node — the smart plug, as a host program, before hardware.
+#
+# The real composition and the real drivers, with a fake GPIO and a fake 1-Wire
+# carrying a simulated DS18B20, speaking the real protocol to the real gateway
+# over a tty. It is what makes the composition testable without the parts.
+#
+#     rho build -target native .
+#
+# @project RoboHub Platform
+# @license MIT
+#
+
+module:
+  name: smart-plug-node
+  type: module
+  version: 0.1.0
+  description: >
+    The smart plug on a host: the real composition and drivers over fakes for the
+    two parts a host does not have, publishing to a real gateway.
+  maintainer: "Aurel Miron"
+  license: "MIT"
+  created: "2026-10-16"
+
+main: src/main.c
+
+build:
+  language: c
+  standard: c11
+  include_dirs:
+    - ../../apps/smart-plug/inc
+  sources:
+    - src/main.c
+    - src/fakes.c
+    # The real composition, borrowed from the application it is part of.
+    - ../../apps/smart-plug/src/smart_plug.c
+  output_dir: output
+  presets:
+    - native
+
+depends:
+  - name: robohub-linux
+    type: c
+    path: /home/miraur/projects/robohub-linux
+    git: https://github.com/RoboHubPlatform/robohub-linux
+    branch: main
+  - name: robohub-common
+    type: c
+    path: /home/miraur/projects/robohub-common
+    git: https://github.com/RoboHubPlatform/robohub-common
+    branch: main
+  - name: robohub-device-node
+    type: c
+    path: /home/miraur/projects/robohub-devices/runtime/device-node
+  - name: robohub-device-relay
+    type: c
+    path: /home/miraur/projects/robohub-devices/devices/actuator/relay
+  - name: robohub-driver-ds18b20
+    type: c
+    path: /home/miraur/projects/robohub-drivers/drivers/temperature/ds18b20
+
+c_connection:
+  library: "robohub-linux"
+  headers:
+    - platform.h
+  include_dirs:
+    - /home/miraur/projects/robohub-linux/include
+    - /home/miraur/projects/robohub-common/include
+    - /home/miraur/projects/robohub-common/include/robohub/hal
+    - /home/miraur/projects/robohub-common/include/robohub/drivers
+    - /home/miraur/projects/robohub-common/include/robohub/devices
+    - /home/miraur/projects/robohub-devices/apps/smart-plug/inc
+  variants:
+    native:
+      libraries:
+        - robohub-common
+        - robohub-device-node
+        - robohub-device-relay
+        - robohub-driver-ds18b20
+
+config:
+  dialect: linux
+  kconfig_fragments:
+    - Kconfig
+  values_file: project.conf
+
+package:
+  kind: library
+  binary: false
+
+metadata:
+  tags:
+    - test
+    - host
+    - smart-plug
+    - device
+    - runtime
+  stability: experimental
+  visibility: public
