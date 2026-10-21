@@ -1,0 +1,43 @@
+# The devices' host tests: what this module publishes into the generated
+# namespace, what it builds, and what it runs.
+#
+# The runner is the ecosystem's, in the orchestrator; this file is the part that
+# is the devices' own.
+#
+# SPDX-License-Identifier: MIT
+
+DEV="$MODULE_ROOT"
+PROTO="$DEV/nodes/gateway-node/src/protocol"
+
+mkdir -p "$GEN/robohub/protocols" "$GEN/robohub/devices/inverter"
+cp "$DEV/protocols/modbus/inc/modbus.h"          "$GEN/robohub/protocols/modbus.h"
+cp "$DEV/protocols/http/inc/http_client.h"       "$GEN/robohub/protocols/http_client.h"
+cp "$DEV/protocols/json/inc/json.h"              "$GEN/robohub/protocols/json.h"
+cp "$DEV/devices/inverter/growatt-es/inc/growatt.h"  "$GEN/robohub/devices/inverter/growatt.h"
+cp "$DEV/devices/inverter/hoymiles-hms/inc/hoymiles.h" "$GEN/robohub/devices/inverter/hoymiles.h"
+mkdir -p "$GEN/robohub/devices/actuator"
+cp "$DEV/devices/actuator/relay/inc/relay.h"     "$GEN/robohub/devices/actuator/relay.h"
+
+$CC -std=c11 -Wall -Wextra -I"$DEV/protocols/modbus/inc" $BASE \
+    "$DEV/tests/test_modbus.c" "$DEV/protocols/modbus/src/modbus.c" -o "$OUT/test_modbus"
+$CC -std=c11 -Wall -Wextra -I"$GEN" -I"$DEV/protocols/json/inc" $BASE \
+    "$DEV/tests/test_json.c" "$DEV/protocols/json/src/json.c" -o "$OUT/test_json"
+$CC -std=c11 -Wall -Wextra -I"$GEN" -I"$DEV/protocols/modbus/inc" \
+    -I"$DEV/devices/inverter/growatt-es/inc" -I"$PROTO" $BASE \
+    "$DEV/tests/test_growatt.c" "$DEV/protocols/modbus/src/modbus.c" \
+    "$DEV/devices/inverter/growatt-es/src/growatt.c" "$PROTO/protocol.c" -o "$OUT/test_growatt"
+$CC -std=gnu11 -Wall -Wextra -I"$GEN" -I"$DEV/protocols/http/inc" \
+    -I"$DEV/protocols/json/inc" -I"$DEV/devices/inverter/hoymiles-hms/inc" $BASE \
+    "$DEV/tests/test_hoymiles.c" "$DEV/protocols/http/src/http_client.c" \
+    "$DEV/protocols/json/src/json.c" "$DEV/devices/inverter/hoymiles-hms/src/hoymiles.c" \
+    "${ROBOHUB_LINUX_DIR:?set ROBOHUB_LINUX_DIR to the robohub-linux checkout}/src/linux_net.c" \
+    "$ROBOHUB_COMMON_DIR/src/platform/net.c" \
+    "$ROBOHUB_COMMON_DIR/src/error.c" -lpthread -o "$OUT/test_hoymiles"
+$CC -std=c11 -Wall -Wextra -I"$GEN" -I"$DEV/devices/actuator/relay/inc" $BASE \
+    "$DEV/tests/test_relay.c" "$DEV/devices/actuator/relay/src/relay.c" -o "$OUT/test_relay"
+
+run test_modbus "$OUT/test_modbus"
+run test_json "$OUT/test_json"
+run test_growatt "$OUT/test_growatt"
+run test_hoymiles "$OUT/test_hoymiles"
+run test_relay "$OUT/test_relay"
