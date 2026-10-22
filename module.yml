@@ -40,3 +40,11 @@ metadata:
     - http
   stability: experimental
   visibility: public
+
+docs:
+  title: RoboHub Devices
+  section: collections
+  order: "10"
+  index: docs/index.md
+  sources:
+    - docs/index.md
