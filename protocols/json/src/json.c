@@ -202,6 +202,26 @@ rh_bool robohub_json_number(const char* json, const char* path, rh_f64* out)
     return json_parse_number(p, out);
 }
 
+rh_bool robohub_json_bool(const char* json, const char* path, rh_bool* out)
+{
+    if (json == NULL || path == NULL || out == NULL) {
+        return RH_FALSE;
+    }
+    const char* p = json_find_path(json, path);
+    if (p == NULL) {
+        return RH_FALSE;
+    }
+    if (strncmp(p, "true", 4) == 0) {
+        *out = RH_TRUE;
+        return RH_TRUE;
+    }
+    if (strncmp(p, "false", 5) == 0) {
+        *out = RH_FALSE;
+        return RH_TRUE;
+    }
+    return RH_FALSE;
+}
+
 rh_bool robohub_json_string(const char* json, const char* path, char* out, rh_size cap)
 {
     if (json == NULL || path == NULL || out == NULL) {

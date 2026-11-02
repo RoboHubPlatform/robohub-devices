@@ -1,0 +1,11 @@
+menu "RoboHub MQTT"
+
+config RH_MQTT
+    bool "MQTT client seam"
+    select RH_NET
+    default n
+    help
+      The MQTT interface a device integration publishes and subscribes through.
+      The platform supplies the broker client; this is the seam.
+
+endmenu

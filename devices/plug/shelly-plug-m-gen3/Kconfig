@@ -1,0 +1,13 @@
+menu "RoboHub Shelly Plug M Gen3"
+
+config RH_DEV_SHELLY_PLUG_M_GEN3
+    bool "Shelly Plug M Gen3"
+    select RH_HTTP
+    select RH_JSON
+    select RH_MQTT
+    default n
+    help
+      A Shelly Plug M Gen3 as a switch and power meter, over HTTP JSON-RPC or
+      MQTT.
+
+endmenu
