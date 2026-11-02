@@ -44,6 +44,13 @@ package:
   kind: library
   binary: false
 
+device:
+  kind: actuator
+  manufacturer: RoboHub
+  model: Relay
+  summary: An on/off output on a GPIO.
+  transports: [gpio]
+
 metadata:
   tags:
     - driver

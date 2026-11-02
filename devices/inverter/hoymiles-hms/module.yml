@@ -52,6 +52,13 @@ package:
   kind: library
   binary: false
 
+device:
+  kind: inverter
+  manufacturer: Hoymiles
+  model: HMS microinverter
+  summary: A Hoymiles microinverter read through an OpenDTU over HTTP.
+  transports: [http]
+
 metadata:
   tags:
     - driver

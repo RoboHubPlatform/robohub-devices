@@ -2,6 +2,12 @@
 
 All notable changes to this module are recorded here, one section per release.
 
+## [0.2.1] - 2026-11-02
+
+The collection's `devices:` list names every device integration, and each one
+declares a `device` block. A consumer reads that list instead of scanning the
+tree, so adding a device updates the picker on the next render.
+
 ## [0.2.0] - 2026-11-02
 
 A Shelly Plug M Gen3 integration: a switch and a power meter over HTTP JSON-RPC

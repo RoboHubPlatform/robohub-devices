@@ -11,7 +11,7 @@
 module:
   name: robohub-devices
   type: collection
-  version: 0.2.0
+  version: 0.2.1
   description: >
     Device integrations for the RoboHub Platform: inverters, meters and other
     equipment spoken to over a protocol of its own, read into the common device
@@ -32,6 +32,15 @@ modules:
   - apps/smart-plug
   - nodes/gateway-node
   - tests/smart-plug-node
+
+# The device integrations this collection carries, in the order a device
+# picker should offer them. A new device adds its path here as well as its
+# folder; a consumer reads this list instead of scanning the tree.
+devices:
+  - devices/plug/shelly-plug-m-gen3
+  - devices/inverter/growatt-es
+  - devices/inverter/hoymiles-hms
+  - devices/actuator/relay
 
 metadata:
   tags:
