@@ -48,6 +48,13 @@ package:
   kind: library
   binary: false
 
+device:
+  kind: inverter
+  manufacturer: Growatt
+  model: SPH/ES hybrid inverter
+  summary: A Growatt hybrid inverter read over Modbus RTU.
+  transports: [modbus]
+
 metadata:
   tags:
     - driver
