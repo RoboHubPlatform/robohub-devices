@@ -30,6 +30,18 @@ exports:
     include_dirs:
       - inc
 
+tests:
+  enabled: true
+  test_dirs:
+    - tests/
+  test_files:
+    - tests/test_json.c
+
+testing:
+  host_tests:
+    enabled: true
+    target_constraint: "native"
+
 package:
   kind: library
   binary: false

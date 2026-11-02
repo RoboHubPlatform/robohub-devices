@@ -1,0 +1,76 @@
+module:
+  name: robohub-device-shelly-plug-m-gen3
+  type: driver
+  version: 0.1.0
+  description: >
+    Shelly Plug M Gen3 as a switch and power meter, reached over HTTP JSON-RPC
+    or MQTT. Both transports produce the same cached state and power reading.
+  maintainer: "Aurel Miron"
+  license: "MIT"
+  created: "2026-11-02"
+
+build:
+  language: c
+  standard: c11
+  include_dirs:
+    - inc
+  sources:
+    - src/shelly_plug.c
+
+depends:
+  - name: robohub-common
+    type: c
+    path: /home/miraur/projects/robohub-common
+    git: https://github.com/RoboHubPlatform/robohub-common
+    branch: main
+  - name: robohub-http
+    type: c
+    path: /home/miraur/projects/robohub-devices/protocols/http
+  - name: robohub-json
+    type: c
+    path: /home/miraur/projects/robohub-devices/protocols/json
+  - name: robohub-mqtt
+    type: c
+    path: /home/miraur/projects/robohub-devices/protocols/mqtt
+
+config:
+  dialect: linux
+  kconfig_fragments:
+    - Kconfig
+
+exports:
+  headers:
+    - robohub/devices/plug/shelly_plug.h
+  cmake:
+    target: "rho::robohub-device-shelly-plug-m-gen3"
+    include_dirs:
+      - inc
+    link_libraries:
+      - rho::robohub-common
+      - rho::robohub-http
+      - rho::robohub-json
+      - rho::robohub-mqtt
+
+package:
+  kind: library
+  binary: false
+
+device:
+  kind: plug
+  manufacturer: Shelly
+  model: Plug M Gen3
+  summary: A Wi-Fi smart plug with a switch and a power meter.
+  transports: [http, mqtt]
+
+metadata:
+  tags: [driver, device, plug, shelly, http, mqtt]
+  stability: experimental
+  visibility: public
+
+docs:
+  title: Shelly Plug M Gen3
+  section: devices
+  order: "50"
+  index: docs/index.md
+  sources:
+    - docs/index.md

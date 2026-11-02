@@ -43,6 +43,15 @@ extern "C" {
 rh_bool robohub_json_number(const char* json, const char* path, rh_f64* out);
 
 /**
+ * @brief Read the boolean at `path`.
+ *
+ * A Shelly switch reports `"output":true`; a device integration that drives a
+ * switch needs that as a decision, not as text. Returns `RH_TRUE` and writes
+ * `out` when the field is found and its value is `true` or `false`.
+ */
+rh_bool robohub_json_bool(const char* json, const char* path, rh_bool* out);
+
+/**
  * @brief Copy the string at `path` into `out`, NUL-terminated.
  *
  * Returns `RH_TRUE` when the field is found and its value is a string. A value

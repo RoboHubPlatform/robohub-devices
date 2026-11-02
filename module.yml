@@ -11,7 +11,7 @@
 module:
   name: robohub-devices
   type: collection
-  version: 0.1.0
+  version: 0.2.0
   description: >
     Device integrations for the RoboHub Platform: inverters, meters and other
     equipment spoken to over a protocol of its own, read into the common device
@@ -21,12 +21,14 @@ module:
 # and depended on from where it sits.
 modules:
   - protocols/modbus
+  - protocols/mqtt
   - protocols/http
   - protocols/json
   - runtime/device-node
   - devices/inverter/growatt-es
   - devices/inverter/hoymiles-hms
   - devices/actuator/relay
+  - devices/plug/shelly-plug-m-gen3
   - apps/smart-plug
   - nodes/gateway-node
   - tests/smart-plug-node
@@ -38,6 +40,8 @@ metadata:
     - inverter
     - modbus
     - http
+    - mqtt
+    - shelly
   stability: experimental
   visibility: public
 
