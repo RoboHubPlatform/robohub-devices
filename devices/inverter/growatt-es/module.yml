@@ -55,6 +55,50 @@ device:
   summary: A Growatt hybrid inverter read over Modbus RTU.
   transports: [modbus]
 
+signals:
+  - id: pv_power
+    label: PV power
+    direction: input
+    unit: W
+    field: pv_power_w
+    kinds: "numeric chart table"
+  - id: load_power
+    label: Load power
+    direction: input
+    unit: W
+    field: load_power_w
+    kinds: "numeric chart table"
+  - id: grid_power
+    label: Grid power
+    direction: input
+    unit: W
+    field: grid_power_w
+    kinds: "numeric chart table"
+  - id: battery_power
+    label: Battery power
+    direction: input
+    unit: W
+    field: battery_power_w
+    kinds: "numeric chart table"
+  - id: battery_soc
+    label: Battery state of charge
+    direction: input
+    unit: "%"
+    field: battery_soc
+    kinds: "numeric chart"
+  - id: energy_today
+    label: Energy today
+    direction: input
+    unit: kWh
+    field: energy_today_kwh
+    kinds: "numeric chart table"
+  - id: energy_total
+    label: Energy total
+    direction: input
+    unit: kWh
+    field: energy_total_kwh
+    kinds: "numeric table"
+
 metadata:
   tags:
     - driver

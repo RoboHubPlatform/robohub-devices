@@ -15,6 +15,31 @@ the interfaces declared by `robohub-common`.
 `protocols/http`, `protocols/json` and `protocols/mqtt` are the protocol
 clients a network device is built on.
 
+## Signals
+
+A device declares the signals a dashboard may bind to in a top-level `signals:`
+list. Each item names an `id`, a `label`, a `direction` (input or output), a
+`unit`, the gateway `field` it reads, and the widget `kinds` it can feed. A plug
+is both: its switch is an output for a button or a toggle, and its power is an
+input for a number, chart or table:
+
+```yaml
+signals:
+  - id: switch
+    label: Switch
+    direction: output
+    field: state
+    kinds: "toggle button"
+  - id: power
+    label: Power
+    direction: input
+    unit: W
+    field: power_w
+    kinds: "numeric chart table"
+```
+
+A device without the block falls back to the signals of its `device.kind`.
+
 ## Building
 
 ```sh
