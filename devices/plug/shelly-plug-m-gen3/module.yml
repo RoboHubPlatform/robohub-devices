@@ -62,6 +62,23 @@ device:
   summary: A Wi-Fi smart plug with a switch and a power meter.
   transports: [http, mqtt]
 
+# What a widget may bind to. The switch is an output a button or a toggle
+# drives; the power reading is an input a number, chart or table shows.
+signals:
+  - id: switch
+    label: Switch
+    direction: output
+    field: state
+    kinds: "toggle button"
+    summary: The plug's relay, on or off.
+  - id: power
+    label: Power
+    direction: input
+    unit: W
+    field: power_w
+    kinds: "numeric chart table"
+    summary: The load the plug is switching, in watts.
+
 metadata:
   tags: [driver, device, plug, shelly, http, mqtt]
   stability: experimental

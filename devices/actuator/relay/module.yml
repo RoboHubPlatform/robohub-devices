@@ -51,6 +51,14 @@ device:
   summary: An on/off output on a GPIO.
   transports: [gpio]
 
+signals:
+  - id: switch
+    label: Switch
+    direction: output
+    field: state
+    kinds: "toggle button"
+    summary: The relay's on/off output.
+
 metadata:
   tags:
     - driver
