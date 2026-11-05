@@ -11,7 +11,7 @@
 module:
   name: robohub-devices
   type: collection
-  version: 0.2.1
+  version: 0.3.0
   description: >
     Device integrations for the RoboHub Platform: inverters, meters and other
     equipment spoken to over a protocol of its own, read into the common device

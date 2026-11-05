@@ -69,3 +69,31 @@ metadata:
     - opendtu
   stability: experimental
   visibility: public
+
+signals:
+  - id: pv_power
+    label: PV power
+    direction: input
+    unit: W
+    field: pv_power_w
+    kinds: "numeric chart table"
+  - id: energy_today
+    label: Energy today
+    direction: input
+    unit: kWh
+    field: energy_today_kwh
+    kinds: "numeric chart table"
+  - id: energy_total
+    label: Energy total
+    direction: input
+    unit: kWh
+    field: energy_total_kwh
+    kinds: "numeric table"
+
+telemetry:
+  interface: inverter
+  http_path: "/api/livedata/status"
+telemetry_http_fields:
+  - "pv_power|pv_power_w|W|f32|total/Power/v|1"
+  - "energy_today|energy_today_kwh|kWh|f32|total/YieldDay/v|1"
+  - "energy_total|energy_total_kwh|kWh|f32|total/YieldTotal/v|1"

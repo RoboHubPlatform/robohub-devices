@@ -2,6 +2,16 @@
 
 All notable changes to this module are recorded here, one section per release.
 
+## [0.3.0] - 2026-11-05
+
+Every device integration now declares its telemetry: an interface kind, and for
+the HTTP devices the path to read and one line per signal with its JSON path and
+scale. The Shelly plug gained voltage, current and total-energy signals; the
+Hoymiles inverter gained the photovoltaic power and energy signals it already
+read. Mesh polls HTTP devices directly and stores the readings under the device
+node's plan identity; a Modbus or GPIO device publishes under the same AREA and
+NODE through its device node.
+
 ## [0.2.1] - 2026-11-02
 
 The collection's `devices:` list names every device integration, and each one

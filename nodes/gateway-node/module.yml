@@ -55,7 +55,7 @@ depends:
     branch: main
   - name: max485-module
     type: c
-    path: /home/miraur/projects/robohub-drivers/boards/max485-module
+    path: /home/miraur/projects/robohub-drivers/boards/transceiver/max485-module
   - name: robohub-modbus
     type: c
     path: /home/miraur/projects/robohub-devices/protocols/modbus
@@ -85,7 +85,7 @@ c_connection:
     - /home/miraur/projects/robohub-common/include/robohub/drivers
     - /home/miraur/projects/robohub-common/include/robohub/devices
     - /home/miraur/projects/robohub-transport/include
-    - /home/miraur/projects/robohub-drivers/boards/max485-module/bsp
+    - /home/miraur/projects/robohub-drivers/boards/transceiver/max485-module/bsp
     - /home/miraur/projects/robohub-devices/protocols/modbus/inc
     - /home/miraur/projects/robohub-devices/protocols/http/inc
     - /home/miraur/projects/robohub-devices/protocols/json/inc

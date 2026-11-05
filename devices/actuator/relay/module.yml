@@ -68,3 +68,6 @@ metadata:
     - relay
   stability: experimental
   visibility: public
+
+telemetry:
+  interface: switch

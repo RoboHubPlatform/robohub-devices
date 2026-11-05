@@ -54,7 +54,7 @@
 #include "robohub/devices/inverter.h"
 #include "robohub/devices/inverter/growatt.h"
 #include "robohub/devices/inverter/hoymiles.h"
-#include "bsp.h"            /* max485-module: the RS485 carrier */
+#include "max485_module.h"   /* max485-module: the RS485 carrier */
 #include "protocol.h"       /* the generated schema: PowerReading */
 
 /* -------------------------------------------------------------------------- */
