@@ -163,3 +163,31 @@ over fakes for the two parts a host does not have; it is built with
 `rho build -target native .`.
 
 For bringing the real hardware up, see [docs/runbook.md](docs/runbook.md).
+
+## Telemetry descriptors
+
+A device integration says what can be read from it, so a consumer does not have
+to know which integration is behind a model:
+
+```yaml
+telemetry:
+  interface: inverter          # inverter, plug or switch
+  http_path: "/api/livedata/status"
+telemetry_http_fields:
+  - "pv_power|pv_power_w|W|f32|total/Power/v|1"
+  - "energy_today|energy_today_kwh|kWh|f32|total/YieldDay/v|1"
+```
+
+A line is `signal|field|unit|type|json/path|scale`. `signal` is the source ID
+Mesh publishes, `field` is the stored name, and `json/path` walks the document
+(`/` separates a key or an array index). `scale` converts a document's unit to
+the one the signal declares: the Shelly reports energy in Wh, so its line uses
+`0.001` to store kWh.
+
+HTTP devices — the Shelly plug and the Hoymiles through an OpenDTU — are read by
+Mesh directly and stored under the device node's plan identity. An inverter or
+a relay that is carried by a device node publishes its frame under the same
+identity: `AREA` is the project area and `NODE` is the device node's index in
+the plan, which the device page shows. The Growatt Modbus integration and the
+GPIO relay use that path; the gateway's outbox turns their reading into one
+series per signal.

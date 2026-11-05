@@ -78,6 +78,27 @@ signals:
     field: power_w
     kinds: "numeric chart table"
     summary: The load the plug is switching, in watts.
+  - id: voltage
+    label: Voltage
+    direction: input
+    unit: V
+    field: voltage_v
+    kinds: "numeric chart table"
+    summary: The mains voltage the plug reports.
+  - id: current
+    label: Current
+    direction: input
+    unit: A
+    field: current_a
+    kinds: "numeric chart table"
+    summary: The current the plug is switching.
+  - id: energy_total
+    label: Energy total
+    direction: input
+    unit: kWh
+    field: energy_total_kwh
+    kinds: "numeric table"
+    summary: The energy the plug has measured in total.
 
 metadata:
   tags: [driver, device, plug, shelly, http, mqtt]
@@ -91,3 +112,13 @@ docs:
   index: docs/index.md
   sources:
     - docs/index.md
+
+telemetry:
+  interface: plug
+  http_path: "/rpc/Shelly.GetStatus"
+telemetry_http_fields:
+  - "switch|state||bool|switch:0/output|1"
+  - "power|power_w|W|f32|switch:0/apower|1"
+  - "voltage|voltage_v|V|f32|switch:0/voltage|1"
+  - "current|current_a|A|f32|switch:0/current|1"
+  - "energy_total|energy_total_kwh|kWh|f32|switch:0/aenergy/total|0.001"

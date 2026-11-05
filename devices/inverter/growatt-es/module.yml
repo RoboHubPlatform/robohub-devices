@@ -108,3 +108,6 @@ metadata:
     - growatt
   stability: experimental
   visibility: public
+
+telemetry:
+  interface: inverter

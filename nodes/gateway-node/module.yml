@@ -55,7 +55,7 @@ depends:
     branch: main
   - name: max485-module
     type: c
-    path: ${RHO_WORKSPACE}/robohub-drivers/boards/max485-module
+    path: ${RHO_WORKSPACE}/robohub-drivers/boards/transceiver/max485-module
   - name: robohub-modbus
     type: c
     path: ${RHO_WORKSPACE}/robohub-devices/protocols/modbus
@@ -85,7 +85,7 @@ c_connection:
     - ${RHO_WORKSPACE}/robohub-common/include/robohub/drivers
     - ${RHO_WORKSPACE}/robohub-common/include/robohub/devices
     - ${RHO_WORKSPACE}/robohub-transport/include
-    - ${RHO_WORKSPACE}/robohub-drivers/boards/max485-module/bsp
+    - ${RHO_WORKSPACE}/robohub-drivers/boards/transceiver/max485-module/bsp
     - ${RHO_WORKSPACE}/robohub-devices/protocols/modbus/inc
     - ${RHO_WORKSPACE}/robohub-devices/protocols/http/inc
     - ${RHO_WORKSPACE}/robohub-devices/protocols/json/inc
