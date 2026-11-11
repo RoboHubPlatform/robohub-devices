@@ -41,23 +41,23 @@ build:
 depends:
   - name: robohub-pico
     type: c
-    path: ${RHO_WORKSPACE}/robohub-pico
+    path: ${ROBOHUB_WORKSPACE}/robohub-pico
     git: https://github.com/RoboHubPlatform/robohub-pico
     branch: main
   - name: robohub-common
     type: c
-    path: ${RHO_WORKSPACE}/robohub-common
+    path: ${ROBOHUB_WORKSPACE}/robohub-common
     git: https://github.com/RoboHubPlatform/robohub-common
     branch: main
   - name: robohub-device-node
     type: c
-    path: ${RHO_WORKSPACE}/robohub-devices/runtime/device-node
+    path: ${ROBOHUB_WORKSPACE}/robohub-devices/runtime/device-node
   - name: robohub-device-relay
     type: c
-    path: ${RHO_WORKSPACE}/robohub-devices/devices/actuator/relay
+    path: ${ROBOHUB_WORKSPACE}/robohub-devices/devices/actuator/relay
   - name: robohub-driver-ds18b20
     type: c
-    path: ${RHO_WORKSPACE}/robohub-drivers/drivers/temperature/ds18b20
+    path: ${ROBOHUB_WORKSPACE}/robohub-drivers/drivers/temperature/ds18b20
 
 c_connection:
   # A C application, not a Rho module, but the headers are still what make the
@@ -76,15 +76,15 @@ c_connection:
     - error.h
     - types.h
   include_dirs:
-    - ${RHO_WORKSPACE}/robohub-pico/include
-    - ${RHO_WORKSPACE}/robohub-pico/include/robohub/hal
-    - ${RHO_WORKSPACE}/robohub-pico/include/robohub/platform
-    - ${RHO_WORKSPACE}/robohub-common/include
-    - ${RHO_WORKSPACE}/robohub-common/include/robohub/hal
-    - ${RHO_WORKSPACE}/robohub-common/include/robohub/drivers
-    - ${RHO_WORKSPACE}/robohub-common/include/robohub/devices
+    - ${ROBOHUB_WORKSPACE}/robohub-pico/include
+    - ${ROBOHUB_WORKSPACE}/robohub-pico/include/robohub/hal
+    - ${ROBOHUB_WORKSPACE}/robohub-pico/include/robohub/platform
+    - ${ROBOHUB_WORKSPACE}/robohub-common/include
+    - ${ROBOHUB_WORKSPACE}/robohub-common/include/robohub/hal
+    - ${ROBOHUB_WORKSPACE}/robohub-common/include/robohub/drivers
+    - ${ROBOHUB_WORKSPACE}/robohub-common/include/robohub/devices
     # The application's own header, smart_plug.h.
-    - ${RHO_WORKSPACE}/robohub-devices/apps/smart-plug/inc
+    - ${ROBOHUB_WORKSPACE}/robohub-devices/apps/smart-plug/inc
   variants:
     pico2w:
       libraries:

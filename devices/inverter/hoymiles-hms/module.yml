@@ -22,15 +22,15 @@ build:
 depends:
   - name: robohub-common
     type: c
-    path: ${RHO_WORKSPACE}/robohub-common
+    path: ${ROBOHUB_WORKSPACE}/robohub-common
     git: https://github.com/RoboHubPlatform/robohub-common
     branch: main
   - name: robohub-http
     type: c
-    path: ${RHO_WORKSPACE}/robohub-devices/protocols/http
+    path: ${ROBOHUB_WORKSPACE}/robohub-devices/protocols/http
   - name: robohub-json
     type: c
-    path: ${RHO_WORKSPACE}/robohub-devices/protocols/json
+    path: ${ROBOHUB_WORKSPACE}/robohub-devices/protocols/json
 
 config:
   dialect: linux

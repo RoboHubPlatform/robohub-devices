@@ -41,37 +41,37 @@ build:
 depends:
   - name: robohub-linux
     type: c
-    path: ${RHO_WORKSPACE}/robohub-linux
+    path: ${ROBOHUB_WORKSPACE}/robohub-linux
     git: https://github.com/RoboHubPlatform/robohub-linux
     branch: main
   - name: robohub-common
     type: c
-    path: ${RHO_WORKSPACE}/robohub-common
+    path: ${ROBOHUB_WORKSPACE}/robohub-common
     git: https://github.com/RoboHubPlatform/robohub-common
     branch: main
   - name: robohub-transport
     type: c
-    path: ${RHO_WORKSPACE}/robohub-transport
+    path: ${ROBOHUB_WORKSPACE}/robohub-transport
     git: https://github.com/RoboHubPlatform/robohub-transport
     branch: main
   - name: max485-module
     type: c
-    path: ${RHO_WORKSPACE}/robohub-drivers/boards/transceiver/max485-module
+    path: ${ROBOHUB_WORKSPACE}/robohub-drivers/boards/transceiver/max485-module
   - name: robohub-modbus
     type: c
-    path: ${RHO_WORKSPACE}/robohub-devices/protocols/modbus
+    path: ${ROBOHUB_WORKSPACE}/robohub-devices/protocols/modbus
   - name: robohub-http
     type: c
-    path: ${RHO_WORKSPACE}/robohub-devices/protocols/http
+    path: ${ROBOHUB_WORKSPACE}/robohub-devices/protocols/http
   - name: robohub-json
     type: c
-    path: ${RHO_WORKSPACE}/robohub-devices/protocols/json
+    path: ${ROBOHUB_WORKSPACE}/robohub-devices/protocols/json
   - name: robohub-device-growatt-es
     type: c
-    path: ${RHO_WORKSPACE}/robohub-devices/devices/inverter/growatt-es
+    path: ${ROBOHUB_WORKSPACE}/robohub-devices/devices/inverter/growatt-es
   - name: robohub-device-hoymiles-hms
     type: c
-    path: ${RHO_WORKSPACE}/robohub-devices/devices/inverter/hoymiles-hms
+    path: ${ROBOHUB_WORKSPACE}/robohub-devices/devices/inverter/hoymiles-hms
 
 c_connection:
   library: "robohub-linux"
@@ -79,19 +79,19 @@ c_connection:
     - platform.h
     - robohub/net.h
   include_dirs:
-    - ${RHO_WORKSPACE}/robohub-devices/nodes/gateway-node/src/protocol
-    - ${RHO_WORKSPACE}/robohub-linux/include
-    - ${RHO_WORKSPACE}/robohub-common/include
-    - ${RHO_WORKSPACE}/robohub-common/include/robohub/hal
-    - ${RHO_WORKSPACE}/robohub-common/include/robohub/drivers
-    - ${RHO_WORKSPACE}/robohub-common/include/robohub/devices
-    - ${RHO_WORKSPACE}/robohub-transport/include
-    - ${RHO_WORKSPACE}/robohub-drivers/boards/transceiver/max485-module/bsp
-    - ${RHO_WORKSPACE}/robohub-devices/protocols/modbus/inc
-    - ${RHO_WORKSPACE}/robohub-devices/protocols/http/inc
-    - ${RHO_WORKSPACE}/robohub-devices/protocols/json/inc
-    - ${RHO_WORKSPACE}/robohub-devices/devices/inverter/growatt-es/inc
-    - ${RHO_WORKSPACE}/robohub-devices/devices/inverter/hoymiles-hms/inc
+    - ${ROBOHUB_WORKSPACE}/robohub-devices/nodes/gateway-node/src/protocol
+    - ${ROBOHUB_WORKSPACE}/robohub-linux/include
+    - ${ROBOHUB_WORKSPACE}/robohub-common/include
+    - ${ROBOHUB_WORKSPACE}/robohub-common/include/robohub/hal
+    - ${ROBOHUB_WORKSPACE}/robohub-common/include/robohub/drivers
+    - ${ROBOHUB_WORKSPACE}/robohub-common/include/robohub/devices
+    - ${ROBOHUB_WORKSPACE}/robohub-transport/include
+    - ${ROBOHUB_WORKSPACE}/robohub-drivers/boards/transceiver/max485-module/bsp
+    - ${ROBOHUB_WORKSPACE}/robohub-devices/protocols/modbus/inc
+    - ${ROBOHUB_WORKSPACE}/robohub-devices/protocols/http/inc
+    - ${ROBOHUB_WORKSPACE}/robohub-devices/protocols/json/inc
+    - ${ROBOHUB_WORKSPACE}/robohub-devices/devices/inverter/growatt-es/inc
+    - ${ROBOHUB_WORKSPACE}/robohub-devices/devices/inverter/hoymiles-hms/inc
   variants:
     native:
       libraries:

@@ -22,12 +22,12 @@ build:
 depends:
   - name: robohub-common
     type: c
-    path: ${RHO_WORKSPACE}/robohub-common
+    path: ${ROBOHUB_WORKSPACE}/robohub-common
     git: https://github.com/RoboHubPlatform/robohub-common
     branch: main
   - name: robohub-modbus
     type: c
-    path: ${RHO_WORKSPACE}/robohub-devices/protocols/modbus
+    path: ${ROBOHUB_WORKSPACE}/robohub-devices/protocols/modbus
 
 config:
   dialect: linux
