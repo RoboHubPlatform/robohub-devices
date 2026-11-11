@@ -1,6 +1,8 @@
 module:
   name: robohub-device-shelly-plug-m-gen3
-  id: robohub-devices.devices.plug.shelly-plug-m-gen3
+  id: robohub.device.shelly-plug-m-gen3
+  previous_ids:
+    - robohub-devices.devices.plug.shelly-plug-m-gen3
   type: device
   version: 0.1.0
   description: >

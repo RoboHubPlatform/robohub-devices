@@ -14,7 +14,9 @@
 
 module:
   name: smart-plug
-  id: robohub-devices.apps.smart-plug
+  id: robohub.device.smart-plug
+  previous_ids:
+    - robohub-devices.apps.smart-plug
   type: device
   version: 0.1.0
   description: >

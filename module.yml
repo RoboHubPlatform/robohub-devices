@@ -10,7 +10,9 @@
 
 module:
   name: robohub-devices
-  id: robohub-devices
+  id: robohub.collection.devices
+  previous_ids:
+    - robohub-devices
   type: collection
   version: 0.3.0
   description: >

@@ -1,6 +1,8 @@
 module:
   name: robohub-device-hoymiles-hms
-  id: robohub-devices.devices.inverter.hoymiles-hms
+  id: robohub.device.hoymiles-hms
+  previous_ids:
+    - robohub-devices.devices.inverter.hoymiles-hms
   type: device
   version: 0.1.0
   description: >

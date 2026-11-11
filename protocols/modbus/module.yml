@@ -1,6 +1,8 @@
 module:
   name: robohub-modbus
-  id: robohub-devices.protocols.modbus
+  id: robohub.middleware.modbus
+  previous_ids:
+    - robohub-devices.protocols.modbus
   type: middleware
   version: 0.1.0
   description: >

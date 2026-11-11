@@ -1,6 +1,8 @@
 module:
   name: robohub-mqtt
-  id: robohub-devices.protocols.mqtt
+  id: robohub.middleware.mqtt
+  previous_ids:
+    - robohub-devices.protocols.mqtt
   type: middleware
   version: 0.1.0
   description: >

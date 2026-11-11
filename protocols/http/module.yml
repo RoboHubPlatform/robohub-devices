@@ -1,6 +1,8 @@
 module:
   name: robohub-http
-  id: robohub-devices.protocols.http
+  id: robohub.middleware.http
+  previous_ids:
+    - robohub-devices.protocols.http
   type: middleware
   version: 0.1.0
   description: >

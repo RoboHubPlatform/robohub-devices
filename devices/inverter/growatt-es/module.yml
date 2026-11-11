@@ -1,6 +1,8 @@
 module:
   name: robohub-device-growatt-es
-  id: robohub-devices.devices.inverter.growatt-es
+  id: robohub.device.growatt-es
+  previous_ids:
+    - robohub-devices.devices.inverter.growatt-es
   type: device
   version: 0.1.0
   description: >

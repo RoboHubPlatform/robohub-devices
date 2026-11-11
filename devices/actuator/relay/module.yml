@@ -1,6 +1,8 @@
 module:
   name: robohub-device-relay
-  id: robohub-devices.devices.actuator.relay
+  id: robohub.device.relay
+  previous_ids:
+    - robohub-devices.devices.actuator.relay
   type: device
   version: 0.1.0
   description: >
