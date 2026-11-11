@@ -34,6 +34,3 @@ coverage/
 # The configuration a build resolves, written beside the sources that use it.
 /.config
 include/generated/
-
-# Resolved on each machine; it records where this machine keeps the modules.
-rho.lock
