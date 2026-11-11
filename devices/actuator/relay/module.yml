@@ -1,6 +1,7 @@
 module:
   name: robohub-device-relay
-  type: driver
+  id: robohub-devices.devices.actuator.relay
+  type: device
   version: 0.1.0
   description: >
     A relay (or any on/off output) over a GPIO, presenting the RoboHubSwitch
@@ -61,7 +62,6 @@ signals:
 
 metadata:
   tags:
-    - driver
     - device
     - actuator
     - switch

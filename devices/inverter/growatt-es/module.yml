@@ -1,6 +1,7 @@
 module:
   name: robohub-device-growatt-es
-  type: driver
+  id: robohub-devices.devices.inverter.growatt-es
+  type: device
   version: 0.1.0
   description: >
     A Growatt hybrid inverter (SPH/ES) read over Modbus RTU. Presents the
@@ -101,7 +102,6 @@ signals:
 
 metadata:
   tags:
-    - driver
     - device
     - inverter
     - modbus

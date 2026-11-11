@@ -13,6 +13,7 @@
 
 module:
   name: smart-plug-node
+  id: robohub-devices.tests.smart-plug-node
   type: module
   version: 0.1.0
   description: >

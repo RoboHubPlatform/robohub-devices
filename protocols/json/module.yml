@@ -1,5 +1,6 @@
 module:
   name: robohub-json
+  id: robohub-devices.protocols.json
   type: middleware
   version: 0.1.0
   description: >

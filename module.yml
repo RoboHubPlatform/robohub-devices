@@ -10,12 +10,22 @@
 
 module:
   name: robohub-devices
+  id: robohub-devices
   type: collection
   version: 0.3.0
   description: >
     Device integrations for the RoboHub Platform: inverters, meters and other
     equipment spoken to over a protocol of its own, read into the common device
     interfaces and published to a gateway.
+
+# The interfaces every module in the collection is written against. A
+# collection is not built, but it belongs to the ecosystem that declares those
+# interfaces, and naming it is what lets a tool recognize the platform and find
+# the module contract the ecosystem publishes.
+depends:
+  - name: robohub-common
+    type: c
+    path: ../robohub-common
 
 # What this repository carries, for a reader and for tooling. A module is built
 # and depended on from where it sits.
@@ -28,8 +38,8 @@ modules:
   - devices/inverter/growatt-es
   - devices/inverter/hoymiles-hms
   - devices/actuator/relay
-  - devices/plug/shelly-plug-m-gen3
   - apps/smart-plug
+  - devices/plug/shelly-plug-m-gen3
   - nodes/gateway-node
   - tests/smart-plug-node
 
@@ -41,6 +51,7 @@ devices:
   - devices/inverter/growatt-es
   - devices/inverter/hoymiles-hms
   - devices/actuator/relay
+  - apps/smart-plug
 
 metadata:
   tags:

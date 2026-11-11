@@ -14,6 +14,7 @@
 
 module:
   name: robohub-device-gateway-node
+  id: robohub-devices.nodes.gateway-node
   type: module
   version: 0.1.0
   description: >

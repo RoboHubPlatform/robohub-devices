@@ -1,6 +1,7 @@
 module:
   name: robohub-device-hoymiles-hms
-  type: driver
+  id: robohub-devices.devices.inverter.hoymiles-hms
+  type: device
   version: 0.1.0
   description: >
     A Hoymiles microinverter read through an OpenDTU over HTTP. Presents the
@@ -61,7 +62,6 @@ device:
 
 metadata:
   tags:
-    - driver
     - device
     - inverter
     - http

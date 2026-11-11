@@ -14,7 +14,8 @@
 
 module:
   name: smart-plug
-  type: module
+  id: robohub-devices.apps.smart-plug
+  type: device
   version: 0.1.0
   description: >
     A custom device: a DS18B20 temperature sensor and a GPIO relay composed into
@@ -101,6 +102,28 @@ config:
 package:
   kind: library
   binary: false
+
+device:
+  kind: plug
+  manufacturer: RoboHub
+  model: Smart Plug
+  summary: A temperature sensor and a relay composed into one switchable, temperature-reporting device.
+  transports: [gpio, onewire]
+
+signals:
+  - id: temperature
+    label: Temperature
+    direction: input
+    unit: "°C"
+    field: temperature_c
+    kinds: "numeric chart table"
+    summary: The DS18B20's reading.
+  - id: switch
+    label: Switch
+    direction: output
+    field: state
+    kinds: "toggle button"
+    summary: The relay's on/off output.
 
 metadata:
   tags:

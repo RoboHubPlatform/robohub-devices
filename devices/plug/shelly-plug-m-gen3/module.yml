@@ -1,6 +1,7 @@
 module:
   name: robohub-device-shelly-plug-m-gen3
-  type: driver
+  id: robohub-devices.devices.plug.shelly-plug-m-gen3
+  type: device
   version: 0.1.0
   description: >
     Shelly Plug M Gen3 as a switch and power meter, reached over HTTP JSON-RPC
@@ -101,7 +102,7 @@ signals:
     summary: The energy the plug has measured in total.
 
 metadata:
-  tags: [driver, device, plug, shelly, http, mqtt]
+  tags: [device, plug, shelly, http, mqtt]
   stability: experimental
   visibility: public
 

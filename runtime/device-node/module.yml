@@ -1,5 +1,6 @@
 module:
   name: robohub-device-node
+  id: robohub-devices.runtime.device-node
   type: runtime
   version: 0.1.0
   description: >

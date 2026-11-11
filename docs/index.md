@@ -4,6 +4,17 @@ The devices a node is made of: inverters, switches, actuators and what they
 report. Each device is a collection of drivers and protocols that implement
 the interfaces declared by `robohub-common`.
 
+A device is a module of type `device`. It is not a `driver`: a driver reaches a
+part through the HAL, and a device reaches the equipment that part is in, often
+over a protocol of the equipment's own. The type is declared by the ecosystem
+contract in `robohub-common/contracts/`, and its `device:` block says what the
+equipment is and how it is reached.
+
+A device may be an integration (a library a node talks to) or an application
+(the firmware a device is built from). `apps/smart-plug` is the second: it has a
+`main`, a `build` section and its own `signals:`, and it composes the relay and
+DS18B20 drivers rather than reimplementing them.
+
 ## The devices
 
 - **Inverters**: Growatt, Hoymiles HMS
