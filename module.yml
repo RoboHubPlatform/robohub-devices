@@ -15,6 +15,7 @@ module:
     - robohub-devices
   type: collection
   version: 0.3.0
+  license: "MIT"
   description: >
     Device integrations for the RoboHub Platform: inverters, meters and other
     equipment spoken to over a protocol of its own, read into the common device
