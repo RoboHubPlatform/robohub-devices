@@ -32,6 +32,7 @@ typedef enum {
     MESSAGE_ID_READING = 513,
     MESSAGE_ID_POWER_READING = 514,
     MESSAGE_ID_STATE_READING = 515,
+    MESSAGE_ID_SENSOR_READING = 516,
     MESSAGE_ID_CONTROL_REQUEST = 769,
     MESSAGE_ID_CONTROL_RESPONSE = 770,
     MESSAGE_ID_DIAG_REQUEST = 1025,
@@ -93,6 +94,7 @@ typedef enum {
     DEVICE_KIND_BATTERY = 5,
     DEVICE_KIND_SWITCH = 6,
     DEVICE_KIND_ACTUATOR = 7,
+    DEVICE_KIND_PLUG = 8,
 } DeviceKind;
 
 typedef enum {
@@ -246,6 +248,19 @@ typedef struct __attribute__((packed)) {
 #define STATE_READING_WIRE_SIZE 24
 size_t StateReading_serialize(const StateReading* value, uint8_t* out, size_t capacity);
 bool StateReading_deserialize(const uint8_t* data, size_t length, StateReading* out);
+
+/* message SensorReading */
+typedef struct __attribute__((packed)) {
+    DeviceId device;
+    uint32_t timestamp_ms;
+    uint16_t status;
+    char field[64];
+    float value;
+} SensorReading;
+
+#define SENSOR_READING_WIRE_SIZE 80
+size_t SensorReading_serialize(const SensorReading* value, uint8_t* out, size_t capacity);
+bool SensorReading_deserialize(const uint8_t* data, size_t length, SensorReading* out);
 
 #ifdef __cplusplus
 }

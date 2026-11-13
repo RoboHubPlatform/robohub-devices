@@ -2,6 +2,10 @@
 
 All notable changes to this module are recorded here, one section per release.
 
+## [0.4.1] - 2026-11-14
+
+The node runtime's and the gateway node's protocol schemas are copies of robohub-protocol 1.0.0, written by its tools/sync.py, and their C regenerated from them: they gain `SensorReading` and the `PLUG` device kind, which the gateway already spoke, and the gateway node's generated code gains `Hello` and `Telemetry`, which its schema already named.
+
 ## [0.4.0] - 2026-11-13
 
 A device says what it can be told to do as data, for every transport it speaks

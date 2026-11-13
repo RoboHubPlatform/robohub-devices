@@ -32,6 +32,96 @@ bool DeviceId_deserialize(const uint8_t* data, size_t length, DeviceId* out)
     return true;
 }
 
+size_t Hello_serialize(const Hello* value, uint8_t* out, size_t capacity)
+{
+    if (value == 0 || out == 0 || capacity < HELLO_WIRE_SIZE) {
+        return 0u;
+    }
+    size_t off = 0u;
+    robohub_v1_put_u8(out + off, (uint8_t)1);
+    off += 1u;
+    if (DeviceId_serialize(&value->device, out + off, capacity - off) == 0u) {
+        return 0u;
+    }
+    off += DEVICE_ID_WIRE_SIZE;
+    robohub_v1_put_u16(out + off, (uint16_t)value->firmware_version);
+    off += 2u;
+    robohub_v1_put_u32(out + off, (uint32_t)value->platform);
+    off += 4u;
+    robohub_v1_put_u32(out + off, (uint32_t)value->mode);
+    off += 4u;
+    robohub_v1_put_u16(out + off, (uint16_t)value->capabilities);
+    off += 2u;
+    return off;
+}
+
+bool Hello_deserialize(const uint8_t* data, size_t length, Hello* out)
+{
+    if (data == 0 || out == 0 || length < HELLO_WIRE_SIZE) {
+        return false;
+    }
+    if (data[0] != (uint8_t)1) {
+        return false;
+    }
+    size_t off = 1u;
+    if (!DeviceId_deserialize(data + off, length - off, &out->device)) {
+        return false;
+    }
+    off += DEVICE_ID_WIRE_SIZE;
+    out->firmware_version = robohub_v1_get_u16(data + off);
+    off += 2u;
+    out->platform = (Platform)robohub_v1_get_u32(data + off);
+    off += 4u;
+    out->mode = (Mode)robohub_v1_get_u32(data + off);
+    off += 4u;
+    out->capabilities = robohub_v1_get_u16(data + off);
+    off += 2u;
+    return true;
+}
+
+size_t Telemetry_serialize(const Telemetry* value, uint8_t* out, size_t capacity)
+{
+    if (value == 0 || out == 0 || capacity < TELEMETRY_WIRE_SIZE) {
+        return 0u;
+    }
+    size_t off = 0u;
+    robohub_v1_put_u8(out + off, (uint8_t)1);
+    off += 1u;
+    if (DeviceId_serialize(&value->device, out + off, capacity - off) == 0u) {
+        return 0u;
+    }
+    off += DEVICE_ID_WIRE_SIZE;
+    robohub_v1_put_u32(out + off, (uint32_t)value->timestamp_ms);
+    off += 4u;
+    robohub_v1_put_f32(out + off, value->temperature_c);
+    off += 4u;
+    robohub_v1_put_u32(out + off, (uint32_t)value->status);
+    off += 4u;
+    return off;
+}
+
+bool Telemetry_deserialize(const uint8_t* data, size_t length, Telemetry* out)
+{
+    if (data == 0 || out == 0 || length < TELEMETRY_WIRE_SIZE) {
+        return false;
+    }
+    if (data[0] != (uint8_t)1) {
+        return false;
+    }
+    size_t off = 1u;
+    if (!DeviceId_deserialize(data + off, length - off, &out->device)) {
+        return false;
+    }
+    off += DEVICE_ID_WIRE_SIZE;
+    out->timestamp_ms = robohub_v1_get_u32(data + off);
+    off += 4u;
+    out->temperature_c = robohub_v1_get_f32(data + off);
+    off += 4u;
+    out->status = (NodeStatus)robohub_v1_get_u32(data + off);
+    off += 4u;
+    return true;
+}
+
 size_t GatewayId_serialize(const GatewayId* value, uint8_t* out, size_t capacity)
 {
     if (value == 0 || out == 0 || capacity < GATEWAY_ID_WIRE_SIZE) {
@@ -373,56 +463,9 @@ bool StateReading_deserialize(const uint8_t* data, size_t length, StateReading* 
     return true;
 }
 
-size_t Hello_serialize(const Hello* value, uint8_t* out, size_t capacity)
+size_t SensorReading_serialize(const SensorReading* value, uint8_t* out, size_t capacity)
 {
-    if (value == 0 || out == 0 || capacity < HELLO_WIRE_SIZE) {
-        return 0u;
-    }
-    size_t off = 0u;
-    robohub_v1_put_u8(out + off, (uint8_t)1);
-    off += 1u;
-    if (DeviceId_serialize(&value->device, out + off, capacity - off) == 0u) {
-        return 0u;
-    }
-    off += DEVICE_ID_WIRE_SIZE;
-    robohub_v1_put_u16(out + off, (uint16_t)value->firmware_version);
-    off += 2u;
-    robohub_v1_put_u32(out + off, (uint32_t)value->platform);
-    off += 4u;
-    robohub_v1_put_u32(out + off, (uint32_t)value->mode);
-    off += 4u;
-    robohub_v1_put_u16(out + off, (uint16_t)value->capabilities);
-    off += 2u;
-    return off;
-}
-
-bool Hello_deserialize(const uint8_t* data, size_t length, Hello* out)
-{
-    if (data == 0 || out == 0 || length < HELLO_WIRE_SIZE) {
-        return false;
-    }
-    if (data[0] != (uint8_t)1) {
-        return false;
-    }
-    size_t off = 1u;
-    if (!DeviceId_deserialize(data + off, length - off, &out->device)) {
-        return false;
-    }
-    off += DEVICE_ID_WIRE_SIZE;
-    out->firmware_version = robohub_v1_get_u16(data + off);
-    off += 2u;
-    out->platform = (Platform)robohub_v1_get_u32(data + off);
-    off += 4u;
-    out->mode = (Mode)robohub_v1_get_u32(data + off);
-    off += 4u;
-    out->capabilities = robohub_v1_get_u16(data + off);
-    off += 2u;
-    return true;
-}
-
-size_t Telemetry_serialize(const Telemetry* value, uint8_t* out, size_t capacity)
-{
-    if (value == 0 || out == 0 || capacity < TELEMETRY_WIRE_SIZE) {
+    if (value == 0 || out == 0 || capacity < SENSOR_READING_WIRE_SIZE) {
         return 0u;
     }
     size_t off = 0u;
@@ -434,16 +477,18 @@ size_t Telemetry_serialize(const Telemetry* value, uint8_t* out, size_t capacity
     off += DEVICE_ID_WIRE_SIZE;
     robohub_v1_put_u32(out + off, (uint32_t)value->timestamp_ms);
     off += 4u;
-    robohub_v1_put_f32(out + off, value->temperature_c);
-    off += 4u;
-    robohub_v1_put_u32(out + off, (uint32_t)value->status);
+    robohub_v1_put_u16(out + off, (uint16_t)value->status);
+    off += 2u;
+    memcpy(out + off, value->field, 64u);
+    off += 64u;
+    robohub_v1_put_f32(out + off, value->value);
     off += 4u;
     return off;
 }
 
-bool Telemetry_deserialize(const uint8_t* data, size_t length, Telemetry* out)
+bool SensorReading_deserialize(const uint8_t* data, size_t length, SensorReading* out)
 {
-    if (data == 0 || out == 0 || length < TELEMETRY_WIRE_SIZE) {
+    if (data == 0 || out == 0 || length < SENSOR_READING_WIRE_SIZE) {
         return false;
     }
     if (data[0] != (uint8_t)1) {
@@ -456,9 +501,11 @@ bool Telemetry_deserialize(const uint8_t* data, size_t length, Telemetry* out)
     off += DEVICE_ID_WIRE_SIZE;
     out->timestamp_ms = robohub_v1_get_u32(data + off);
     off += 4u;
-    out->temperature_c = robohub_v1_get_f32(data + off);
-    off += 4u;
-    out->status = (NodeStatus)robohub_v1_get_u32(data + off);
+    out->status = robohub_v1_get_u16(data + off);
+    off += 2u;
+    memcpy(out->field, data + off, 64u);
+    off += 64u;
+    out->value = robohub_v1_get_f32(data + off);
     off += 4u;
     return true;
 }

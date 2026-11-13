@@ -32,6 +32,7 @@ typedef enum {
     MESSAGE_ID_READING = 513,
     MESSAGE_ID_POWER_READING = 514,
     MESSAGE_ID_STATE_READING = 515,
+    MESSAGE_ID_SENSOR_READING = 516,
     MESSAGE_ID_CONTROL_REQUEST = 769,
     MESSAGE_ID_CONTROL_RESPONSE = 770,
     MESSAGE_ID_DIAG_REQUEST = 1025,
@@ -93,6 +94,7 @@ typedef enum {
     DEVICE_KIND_BATTERY = 5,
     DEVICE_KIND_SWITCH = 6,
     DEVICE_KIND_ACTUATOR = 7,
+    DEVICE_KIND_PLUG = 8,
 } DeviceKind;
 
 typedef enum {
@@ -126,6 +128,31 @@ typedef struct __attribute__((packed)) {
 #define DEVICE_ID_WIRE_SIZE 5
 size_t DeviceId_serialize(const DeviceId* value, uint8_t* out, size_t capacity);
 bool DeviceId_deserialize(const uint8_t* data, size_t length, DeviceId* out);
+
+/* message Hello */
+typedef struct __attribute__((packed)) {
+    DeviceId device;
+    uint16_t firmware_version;
+    Platform platform;
+    Mode mode;
+    uint16_t capabilities;
+} Hello;
+
+#define HELLO_WIRE_SIZE 18
+size_t Hello_serialize(const Hello* value, uint8_t* out, size_t capacity);
+bool Hello_deserialize(const uint8_t* data, size_t length, Hello* out);
+
+/* message Telemetry */
+typedef struct __attribute__((packed)) {
+    DeviceId device;
+    uint32_t timestamp_ms;
+    float temperature_c;
+    NodeStatus status;
+} Telemetry;
+
+#define TELEMETRY_WIRE_SIZE 18
+size_t Telemetry_serialize(const Telemetry* value, uint8_t* out, size_t capacity);
+bool Telemetry_deserialize(const uint8_t* data, size_t length, Telemetry* out);
 
 /* message GatewayId */
 typedef struct __attribute__((packed)) {
@@ -222,30 +249,18 @@ typedef struct __attribute__((packed)) {
 size_t StateReading_serialize(const StateReading* value, uint8_t* out, size_t capacity);
 bool StateReading_deserialize(const uint8_t* data, size_t length, StateReading* out);
 
-/* message Hello */
-typedef struct __attribute__((packed)) {
-    DeviceId device;
-    uint16_t firmware_version;
-    Platform platform;
-    Mode mode;
-    uint16_t capabilities;
-} Hello;
-
-#define HELLO_WIRE_SIZE 18
-size_t Hello_serialize(const Hello* value, uint8_t* out, size_t capacity);
-bool Hello_deserialize(const uint8_t* data, size_t length, Hello* out);
-
-/* message Telemetry */
+/* message SensorReading */
 typedef struct __attribute__((packed)) {
     DeviceId device;
     uint32_t timestamp_ms;
-    float temperature_c;
-    NodeStatus status;
-} Telemetry;
+    uint16_t status;
+    char field[64];
+    float value;
+} SensorReading;
 
-#define TELEMETRY_WIRE_SIZE 18
-size_t Telemetry_serialize(const Telemetry* value, uint8_t* out, size_t capacity);
-bool Telemetry_deserialize(const uint8_t* data, size_t length, Telemetry* out);
+#define SENSOR_READING_WIRE_SIZE 80
+size_t SensorReading_serialize(const SensorReading* value, uint8_t* out, size_t capacity);
+bool SensorReading_deserialize(const uint8_t* data, size_t length, SensorReading* out);
 
 #ifdef __cplusplus
 }
