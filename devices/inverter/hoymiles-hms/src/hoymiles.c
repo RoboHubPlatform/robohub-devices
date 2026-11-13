@@ -17,37 +17,61 @@
 #include <stddef.h>
 #include <string.h>
 
-/* Read one of the inverter's total figures. The figures live in the document's
- * `total` object — the channels under `0`, `1`, … are the DC inputs and the
- * total is the inverter — so the total is read, and a document that does not
- * group them falls back to a top-level key. */
-static rh_bool hoymiles_figure(const char* body, const char* key, rh_f64* out)
+/* `total/<key>/<leaf>`, or `<key>/<leaf>` without the group. */
+static void hoymiles_path(char* path, rh_size cap, rh_bool grouped, const char* key, const char* leaf)
+{
+    rh_size at = 0u;
+    const char* parts[3] = { grouped ? "total/" : "", key, leaf };
+    for (rh_size p = 0u; p < 3u; p++) {
+        if (p == 2u && at + 1u < cap) {
+            path[at++] = '/';
+        }
+        for (const char* c = parts[p]; *c != '\0' && at + 1u < cap; c++) {
+            path[at++] = *c;
+        }
+    }
+    path[at] = '\0';
+}
+
+/* Read one of the inverter's total figures, in the reading's unit. The figures
+ * live in the document's `total` object — the channels under `0`, `1`, … are
+ * the DC inputs and the total is the inverter — and a document that does not
+ * group them falls back to a top-level key. Each figure carries its unit (`u`):
+ * OpenDTU counts the day's yield in Wh and the lifetime yield in kWh, and a
+ * figure whose unit is the thousand-times one is scaled to the reading's. With
+ * no unit, the one OpenDTU documents for the figure is taken. */
+static rh_bool hoymiles_figure(const char* body, const char* key, const char* unit,
+                               const char* default_unit, rh_f64* out)
 {
     char path[64];
-    rh_size at = 0u;
-    const char* prefix = "total/";
-    for (const char* c = prefix; *c != '\0' && at + 1u < sizeof(path); c++) {
-        path[at++] = *c;
+    rh_bool grouped = RH_TRUE;
+    hoymiles_path(path, sizeof(path), RH_TRUE, key, "v");
+    if (!robohub_json_number(body, path, out)) {
+        grouped = RH_FALSE;
+        hoymiles_path(path, sizeof(path), RH_FALSE, key, "v");
+        if (!robohub_json_number(body, path, out)) {
+            return RH_FALSE;
+        }
     }
-    for (const char* c = key; *c != '\0' && at + 3u < sizeof(path); c++) {
-        path[at++] = *c;
+    char given[8];
+    hoymiles_path(path, sizeof(path), grouped, key, "u");
+    if (!robohub_json_string(body, path, given, sizeof(given))) {
+        strncpy(given, default_unit, sizeof(given) - 1u);
+        given[sizeof(given) - 1u] = '\0';
     }
-    path[at++] = '/';
-    path[at++] = 'v';
-    path[at] = '\0';
-    if (robohub_json_number(body, path, out)) {
+    if (strcmp(given, unit) == 0) {
         return RH_TRUE;
     }
-    /* Without a total group, the same key at the top level. */
-    char fallback[64];
-    at = 0u;
-    for (const char* c = key; *c != '\0' && at + 3u < sizeof(fallback); c++) {
-        fallback[at++] = *c;
+    /* W against kW, Wh against kWh: one is the other with a k in front. */
+    if (given[0] == 'k' && strcmp(given + 1, unit) == 0) {
+        *out *= 1000.0;
+        return RH_TRUE;
     }
-    fallback[at++] = '/';
-    fallback[at++] = 'v';
-    fallback[at] = '\0';
-    return robohub_json_number(body, fallback, out);
+    if (unit[0] == 'k' && strcmp(unit + 1, given) == 0) {
+        *out /= 1000.0;
+        return RH_TRUE;
+    }
+    return RH_FALSE; /* a unit this reading cannot be put in */
 }
 
 /* -------------------------------------------------------------------------- */
@@ -95,15 +119,15 @@ static RoboHubError hoymiles_op_read(RoboHubInverter* self, RoboHubPowerReading*
 
     rh_u16 valid = 0u;
     rh_f64 value = 0;
-    if (hoymiles_figure(dev->body, "Power", &value)) {
+    if (hoymiles_figure(dev->body, "Power", "W", "W", &value)) {
         out->pv_power_w = (rh_f32)value;
         valid |= ROBOHUB_POWER_PV_POWER;
     }
-    if (hoymiles_figure(dev->body, "YieldDay", &value)) {
+    if (hoymiles_figure(dev->body, "YieldDay", "kWh", "Wh", &value)) {
         out->energy_today_kwh = (rh_f32)value;
         valid |= ROBOHUB_POWER_ENERGY_TODAY;
     }
-    if (hoymiles_figure(dev->body, "YieldTotal", &value)) {
+    if (hoymiles_figure(dev->body, "YieldTotal", "kWh", "kWh", &value)) {
         out->energy_total_kwh = (rh_f32)value;
         valid |= ROBOHUB_POWER_ENERGY_TOTAL;
     }

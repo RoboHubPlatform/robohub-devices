@@ -4,11 +4,12 @@ module:
   previous_ids:
     - robohub-devices.devices.inverter.growatt-es
   type: device
-  version: 0.1.0
+  version: 0.2.0
   description: >
-    A Growatt hybrid inverter (SPH/ES) read over Modbus RTU. Presents the
-    RoboHubInverter device interface; the register map is data so a model whose
-    layout differs is a change of map, not of code.
+    A Growatt inverter read over Modbus RTU — by default the SPF 3000-6000 ES
+    Plus, from Growatt's off-grid RS485 protocol. Presents the RoboHubInverter
+    device interface; the register map is data so a model whose layout differs
+    is a change of map, not of code.
   maintainer: "Aurel Miron"
   license: "MIT"
   created: "2026-10-14"
@@ -113,3 +114,9 @@ metadata:
 
 telemetry:
   interface: inverter
+
+docs:
+  title: Growatt inverter
+  section: devices
+  order: "40"
+  index: docs/index.md

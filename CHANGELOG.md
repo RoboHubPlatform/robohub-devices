@@ -2,6 +2,21 @@
 
 All notable changes to this module are recorded here, one section per release.
 
+## [0.4.2] - 2026-11-14
+
+The Growatt driver's default map is the SPF 3000-6000 ES Plus, from Growatt's
+off-grid RS485 protocol V0.26 — the inverter this installation has — where it was
+a placeholder: 32-bit powers in 0.1 W, two PV strings added, the grid's sign as
+sent and the battery's turned to the reading's (+ charge), read as one block of
+registers 0-101. A field now says its width and sign, so a map is the whole of a
+model. It has not yet been read from a real inverter; the docs say how to check
+it on site. growatt-es 0.2.0.
+
+The Hoymiles day's yield is in kWh: OpenDTU sends it in Wh, and both the C driver
+(which now reads each figure's unit) and the manifest Mesh polls (scale 0.001)
+took it as kWh, a thousand times too much. The tests use the document OpenDTU
+documents. hoymiles-hms 0.1.1.
+
 ## [0.4.1] - 2026-11-14
 
 The node runtime's and the gateway node's protocol schemas are copies of robohub-protocol 1.0.0, written by its tools/sync.py, and their C regenerated from them: they gain `SensorReading` and the `PLUG` device kind, which the gateway already spoke, and the gateway node's generated code gains `Hello` and `Telemetry`, which its schema already named.

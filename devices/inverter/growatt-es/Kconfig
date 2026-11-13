@@ -1,11 +1,12 @@
 menu "RoboHub Growatt inverter"
 
 config RH_DEV_GROWATT_ES
-    bool "Growatt SPH/ES hybrid inverter (Modbus)"
+    bool "Growatt inverter over Modbus (default map: SPF ES Plus)"
     select RH_MODBUS
     default n
     help
-      A Growatt hybrid inverter read over Modbus RTU, presenting the
-      RoboHubInverter device interface.
+      A Growatt inverter read over Modbus RTU, presenting the
+      RoboHubInverter device interface. The default register map is the
+      SPF 3000-6000 ES Plus (off-grid RS485 protocol V0.26).
 
 endmenu

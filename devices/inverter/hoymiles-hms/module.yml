@@ -4,7 +4,7 @@ module:
   previous_ids:
     - robohub-devices.devices.inverter.hoymiles-hms
   type: device
-  version: 0.1.0
+  version: 0.1.1
   description: >
     A Hoymiles microinverter read through an OpenDTU over HTTP. Presents the
     RoboHubInverter device interface with the photovoltaic power and energy
@@ -59,7 +59,7 @@ device:
   kind: inverter
   manufacturer: Hoymiles
   model: HMS microinverter
-  summary: A Hoymiles microinverter read through an OpenDTU over HTTP.
+  summary: Hoymiles HM/HMS microinverters (such as the HMS-800W) read through an OpenDTU over HTTP, all of its inverters as one total.
   transports: [http]
 
 metadata:
@@ -97,5 +97,13 @@ telemetry:
   http_path: "/api/livedata/status"
 telemetry_http_fields:
   - "pv_power|pv_power_w|W|f32|total/Power/v|1"
-  - "energy_today|energy_today_kwh|kWh|f32|total/YieldDay/v|1"
+  # OpenDTU counts the day's yield in Wh (`"u":"Wh"`) and the lifetime yield in
+  # kWh: the scale puts the day's in kWh like the rest.
+  - "energy_today|energy_today_kwh|kWh|f32|total/YieldDay/v|0.001"
   - "energy_total|energy_total_kwh|kWh|f32|total/YieldTotal/v|1"
+
+docs:
+  title: Hoymiles through OpenDTU
+  section: devices
+  order: "45"
+  index: docs/index.md

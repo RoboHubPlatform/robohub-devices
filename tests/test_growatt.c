@@ -2,9 +2,9 @@
  * test_growatt.c — the Growatt device over a fake Modbus block, and the reading
  * it produces round-tripped through the generated PowerReading payload.
  *
- * The fake RS485 answers a function-04 read with a block of registers built from
- * a test map, so the decode is checked independently of the default map's
- * addresses. The generated payload is then written and read back, which is what
+ * The fake RS485 answers a function-04 read with the block an SPF 6000 ES Plus
+ * would, so the default map is what is checked: two PV strings added, 32-bit
+ * figures whose high word matters, an export and a battery discharging. The generated payload is then written and read back, which is what
  * proves the device's reading and the gateway's message are one layout.
  *
  * @project RoboHub Platform
@@ -68,15 +68,21 @@ int main(void)
 {
     Fake fake;
     memset(&fake, 0, sizeof(fake));
-    fake.count = 16u;
-    /* 0.1 kW figures, signed where they flow either way. */
-    fake.block[1] = 1200u;    /* pv  1200 W  (scale 1) */
-    fake.block[2] = 800u;     /* load 800 W  */
-    fake.block[3] = 0xFFCEu;  /* grid -50 W  (signed) */
-    fake.block[4] = 100u;     /* battery +100 W */
-    fake.block[5] = 855u;     /* soc 85.5 %  (scale 0.1) */
-    fake.block[6] = 42u;      /* energy today 4.2 kWh (scale 0.1) */
-    fake.block[7] = 12345u;   /* energy total 1234.5 kWh */
+    /* The default map's block: an SPF 6000 ES Plus, registers 0-101. A 32-bit
+     * figure is the high register then the low one, in 0.1 W or 0.1 kWh. */
+    fake.count = 102u;
+    fake.block[4] = 12000u;                     /* PV1 1200.0 W */
+    fake.block[6] = 3000u;                      /* PV2  300.0 W */
+    fake.block[9] = 0x0001u;                    /* load 0x00011170 = 70000 -> 7000.0 W */
+    fake.block[10] = 0x1170u;                   /*   (the high word matters) */
+    fake.block[36] = 0xFFFFu;                   /* grid -500 -> -50.0 W, exporting */
+    fake.block[37] = 0xFE0Cu;
+    fake.block[78] = 1000u;                     /* battery +100.0 W discharge -> -100 W */
+    fake.block[18] = 85u;                       /* SOC 85 % */
+    fake.block[49] = 30u;                       /* PV1 today 3.0 kWh */
+    fake.block[53] = 12u;                       /* PV2 today 1.2 kWh */
+    fake.block[51] = 10000u;                    /* PV1 total 1000.0 kWh */
+    fake.block[55] = 2345u;                     /* PV2 total  234.5 kWh */
 
     RoboHubRS485 bus;
     memset(&bus, 0, sizeof(bus));
@@ -91,17 +97,10 @@ int main(void)
     RoboHubModbus master;
     int ok = robohub_modbus_init(&master, &bus, 1u, 0u) == ROBOHUB_OK;
 
-    RoboHubGrowattMap map = {
-        .base = 0u, .count = 16u,
-        .pv_power = { 1u, 1.0f }, .load_power = { 2u, 1.0f },
-        .grid_power = { 3u, 1.0f }, .battery_power = { 4u, 1.0f },
-        .battery_soc = { 5u, 0.1f }, .energy_today = { 6u, 0.1f },
-        .energy_total = { 7u, 0.1f },
-    };
     RoboHubDeviceId id = { .area_id = 7u, .node_id = 10u };
 
     RoboHubGrowatt growatt;
-    ok = ok && robohub_growatt_init(&growatt, &master, id, &map) == ROBOHUB_OK;
+    ok = ok && robohub_growatt_init(&growatt, &master, id, NULL) == ROBOHUB_OK;
 
     RoboHubPowerReading reading;
     memset(&reading, 0, sizeof(reading));
@@ -109,11 +108,11 @@ int main(void)
 
     ok = ok && reading.kind == ROBOHUB_DEVICE_INVERTER;
     ok = ok && reading.device.area_id == 7u && reading.device.node_id == 10u;
-    ok = ok && reading.pv_power_w == 1200.0f;
-    ok = ok && reading.load_power_w == 800.0f;
-    ok = ok && reading.grid_power_w == -50.0f;
-    ok = ok && reading.battery_power_w == 100.0f;
-    ok = ok && near(reading.battery_soc, 85.5f);
+    ok = ok && near(reading.pv_power_w, 1500.0f);          /* PV1 + PV2 */
+    ok = ok && near(reading.load_power_w, 7000.0f);
+    ok = ok && near(reading.grid_power_w, -50.0f);
+    ok = ok && near(reading.battery_power_w, -100.0f);     /* discharging */
+    ok = ok && near(reading.battery_soc, 85.0f);
     ok = ok && near(reading.energy_today_kwh, 4.2f);
     ok = ok && near(reading.energy_total_kwh, 1234.5f);
     ok = ok && (reading.valid & ROBOHUB_POWER_PV_POWER) != 0u &&
@@ -139,8 +138,14 @@ int main(void)
     ok = ok && PowerReading_deserialize(encoded, length, &back);
     ok = ok && back.device.area_id == 7u && back.device.node_id == 10u;
     ok = ok && back.kind == (rh_u32)ROBOHUB_DEVICE_INVERTER;
-    ok = ok && back.pv_power_w == 1200.0f && back.grid_power_w == -50.0f;
-    ok = ok && back.energy_total_kwh == 1234.5f;
+    ok = ok && near(back.pv_power_w, 1500.0f) && near(back.grid_power_w, -50.0f);
+    ok = ok && near(back.energy_total_kwh, 1234.5f);
+
+    /* A map larger than one Modbus read is refused. */
+    RoboHubGrowattMap too_big = *robohub_growatt_default_map();
+    too_big.count = 126u;
+    RoboHubGrowatt refused;
+    ok = ok && robohub_growatt_init(&refused, &master, id, &too_big) == ROBOHUB_ERR_INVALID_ARG;
 
     printf(ok ? "Growatt OK\n" : "Growatt FAILED\n");
     return ok ? 0 : 1;

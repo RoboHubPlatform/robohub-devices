@@ -35,9 +35,11 @@ HOST = "127.0.0.1"
 AREA = 7
 NODE = 30
 OPENDTU_BODY = (
-    b'{"inverters":[{"name":"HMS-800","data":{'
-    b'"0":{"Power":{"v":411.0}},'
-    b'"total":{"Power":{"v":823.5},"YieldDay":{"v":1.75},"YieldTotal":{"v":4321.125}}}}]}'
+    b'{"inverters":[{"serial":"1161716xxxxx","name":"HMS-800","order":0,"data_age":3,'
+    b'"poll_enabled":true,"reachable":true,"producing":true,"limit_relative":100,"limit_absolute":-1}],'
+    b'"total":{"Power":{"v":823.5,"u":"W","d":1},"YieldDay":{"v":1750,"u":"Wh","d":0},'
+    b'"YieldTotal":{"v":4321.125,"u":"kWh","d":3}},'
+    b'"hints":{"time_sync":false,"radio_problem":false,"default_password":false}}'
 )
 
 

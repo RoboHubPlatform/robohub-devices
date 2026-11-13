@@ -21,11 +21,16 @@
 
 #include "robohub/devices/inverter/hoymiles.h"
 
+/* The document OpenDTU documents for GET /api/livedata/status: an `inverters`
+ * list and a `total`, each figure with its unit — the day's yield in Wh. */
 static const char* RESPONSE =
-    "{\"inverters\":[{\"name\":\"HMS-800\",\"data\":{"
-    "\"0\":{\"Power\":{\"v\":411.0}},"
-    "\"total\":{\"Power\":{\"v\":823.5},\"YieldDay\":{\"v\":1.75},"
-    "\"YieldTotal\":{\"v\":4321.125}}}}]}";
+    "{\"inverters\":[{\"serial\":\"1161716xxxxx\",\"name\":\"HMS-800\",\"order\":0,"
+    "\"data_age\":3,\"poll_enabled\":true,\"reachable\":true,\"producing\":true,"
+    "\"limit_relative\":100,\"limit_absolute\":-1}],"
+    "\"total\":{\"Power\":{\"v\":823.5,\"u\":\"W\",\"d\":1},"
+    "\"YieldDay\":{\"v\":1750,\"u\":\"Wh\",\"d\":0},"
+    "\"YieldTotal\":{\"v\":4321.125,\"u\":\"kWh\",\"d\":3}},"
+    "\"hints\":{\"time_sync\":false,\"radio_problem\":false,\"default_password\":false}}";
 
 static int g_listen_fd = -1;
 
@@ -93,7 +98,7 @@ int main(void)
     ok = ok && reading.kind == ROBOHUB_DEVICE_INVERTER;
     ok = ok && reading.device.area_id == 7u && reading.device.node_id == 11u;
     ok = ok && near(reading.pv_power_w, 823.5f);
-    ok = ok && near(reading.energy_today_kwh, 1.75f);
+    ok = ok && near(reading.energy_today_kwh, 1.75f);   /* 1750 Wh */
     ok = ok && near(reading.energy_total_kwh, 4321.125f);
     ok = ok && (reading.valid & ROBOHUB_POWER_PV_POWER) != 0u;
     ok = ok && (reading.valid & ROBOHUB_POWER_ENERGY_TOTAL) != 0u;
