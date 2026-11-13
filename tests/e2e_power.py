@@ -13,15 +13,25 @@ the gateway's uplink, and the gateway lists the inverter and serves its figures.
 
     GATEWAY_BIN=/path/to/robohub-gateway tests/e2e_power.py
 
+It runs three times: with the link sealed (the node given a board id and key,
+the gateway the project key they derive from), plain against a gateway that
+refuses plain frames — the inverter must not appear — and plain against one
+that allows them, as a deployment migrating its boards does. The gateway's
+REST API wants a ticket; the test signs one with a key it makes for itself.
+
 NODE_BIN defaults to this repository's node build. The gateway binary is another
 repository's, so it is named by the environment.
 """
+import hashlib
+import hmac
 import http.client as httpclient
 import json
 import os
 import socket
 import subprocess
+import shutil
 import sys
+import tempfile
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -67,9 +77,14 @@ def free_port():
     return port
 
 
+TOKEN = ""
+
+
 def http(port, method, path, body=None):
     conn = httpclient.HTTPConnection(HOST, port, timeout=5)
     headers = {"Content-Type": "application/json"} if body else {}
+    if TOKEN:
+        headers["Authorization"] = f"Bearer {TOKEN}"
     conn.request(method, path, body=body, headers=headers)
     resp = conn.getresponse()
     data = resp.read().decode()
@@ -90,7 +105,18 @@ def wait_ready(port, timeout=10.0):
     return False
 
 
+def mint_token(home):
+    """A ticket for the gateway, signed by a key made for this run only."""
+    keys = os.path.join(home, ".rho", "auth")
+    os.makedirs(keys, exist_ok=True)
+    subprocess.run(["rho", "auth", "keygen", "--dir", keys, "--force"], check=True, capture_output=True, text=True)
+    return subprocess.run(["rho", "auth", "ticket", "--private", os.path.join(keys, "private.pem"), "--issuer", "keeper",
+                           "--audience", "gateway", "--subject", "e2e", "--scopes", "*", "--ttl", "1h"],
+                          check=True, capture_output=True, text=True).stdout.strip()
+
+
 def main():
+    global TOKEN
     if not GATEWAY_BIN or not os.path.exists(GATEWAY_BIN):
         print("set GATEWAY_BIN to the robohub-gateway binary", file=sys.stderr)
         return 2
@@ -98,7 +124,37 @@ def main():
         print(f"node binary not found at {NODE_BIN}; build it with "
               f"`rho build -target native .`", file=sys.stderr)
         return 2
+    work = tempfile.mkdtemp(prefix="e2e-power-")
+    try:
+        TOKEN = mint_token(work)
+        k_gw = os.urandom(32)
+        key_file = os.path.join(work, "gateway.key")
+        with open(key_file, "w") as f:
+            f.write(k_gw.hex() + "\n")
+        os.chmod(key_file, 0o600)
+        # The board's key is derived from the project's, as Mesh derives it.
+        uid = os.urandom(8)
+        device_key = hmac.new(k_gw, b"rh-dev1" + uid, hashlib.sha256).digest()[:16]
+        device_key_file = os.path.join(work, "device.key")
+        with open(device_key_file, "w") as f:
+            f.write(device_key.hex() + "\n")
+        os.chmod(device_key_file, 0o600)
+        sealed = {"RH_SECURE_UID": uid.hex(), "RH_SECURE_KEY_FILE": device_key_file}
+        failures = []
+        failures += run("sealed", work, key_file, sealed, {}, expect_listed=True)
+        failures += run("plain, refused", work, key_file, {}, {}, expect_listed=False)
+        failures += run("plain, allowed", work, key_file, {}, {"ALLOW_PLAIN_FRAMES": "1"}, expect_listed=True)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+    if failures:
+        for failure in failures:
+            print("FAIL:", failure)
+        return 1
+    print("e2e power: sealed, refused and allowed all as expected")
+    return 0
 
+
+def run(label, home, key_file, node_extra, gateway_extra, expect_listed):
     # The fake OpenDTU.
     opendtu = HTTPServer((HOST, 0), OpenDTU)
     opendtu_port = opendtu.server_address[1]
@@ -113,15 +169,19 @@ def main():
         "UPLINK_PORT": str(uplink_port),
         "GATEWAY_MODE": "master",
         "GATEWAY_AREA": str(AREA),
+        "HOME": home,
+        "GATEWAY_KEY_FILE": key_file,
     })
+    env.pop("ALLOW_PLAIN_FRAMES", None)
+    env.update(gateway_extra)
     gateway = subprocess.Popen([GATEWAY_BIN], env=env, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT, text=True)
 
     failures = []
     if not wait_ready(rest_port):
         gateway.kill()
-        print("FAIL: gateway did not become ready:\n", gateway.stdout.read())
-        return 1
+        opendtu.shutdown()
+        return [f"{label}: the gateway did not become ready:\n" + gateway.stdout.read()]
 
     node_env = dict(os.environ)
     node_env.update({
@@ -135,6 +195,9 @@ def main():
         "NODE": str(NODE),
         "INTERVAL_MS": "300",
     })
+    for name in ("RH_SECURE_UID", "RH_SECURE_KEY_FILE"):
+        node_env.pop(name, None)
+    node_env.update(node_extra)
     node = subprocess.Popen([NODE_BIN], env=node_env, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, text=True)
 
@@ -154,9 +217,14 @@ def main():
             if found:
                 break
 
-        print("NODES:", body)
+        if not expect_listed:
+            if found:
+                failures.append(f"{label}: the gateway listed a node it should have refused")
+            else:
+                print(f"ok: {label}")
+            return failures
         if not found:
-            failures.append("the inverter never appeared in the device listing")
+            failures.append(f"{label}: the inverter never appeared in the device listing")
         else:
             if abs(found.get("pv_power_w", 0) - 823.5) > 0.01:
                 failures.append(f"pv_power_w wrong: {found.get('pv_power_w')}")
@@ -169,26 +237,23 @@ def main():
                 failures.append(f"a microinverter should have no battery: {valid}")
 
         status, body = http(rest_port, "GET", "/api/v1/telemetry/power")
-        print("POWER:", status, body)
         try:
             power = json.loads(body)
         except Exception:
             power = {}
         if status != 200 or abs(power.get("pv_power_w", 0) - 823.5) > 0.01:
-            failures.append(f"the power endpoint is wrong: {status} {body}")
+            failures.append(f"{label}: the power endpoint is wrong: {status} {body}")
     finally:
         for proc in (node, gateway):
             proc.kill()
         opendtu.shutdown()
 
     if failures:
-        print("\nnode output:\n", node.stdout.read())
-        print("\ngateway output:\n", gateway.stdout.read())
-        for f in failures:
-            print("FAIL:", f)
-        return 1
-    print("\nOK: device -> node -> gateway end to end")
-    return 0
+        print(f"\n[{label}] node output:\n", node.stdout.read())
+        print(f"\n[{label}] gateway output:\n", gateway.stdout.read()[-3000:])
+    else:
+        print(f"ok: {label}")
+    return failures
 
 
 if __name__ == "__main__":

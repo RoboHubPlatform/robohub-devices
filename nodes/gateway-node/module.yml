@@ -18,7 +18,7 @@ module:
   previous_ids:
     - robohub-devices.nodes.gateway-node
   type: module
-  version: 0.1.0
+  version: 0.1.1
   description: >
     A device node: reads an inverter through robohub-devices and publishes the
     reading to a RoboHub gateway as a PowerReading frame.

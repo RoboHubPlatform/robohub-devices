@@ -49,6 +49,7 @@ extern "C" {
 #include "types.h"
 #include "error.h"
 #include "robohub/transport.h"
+#include "robohub/secure.h"
 #include "robohub/core/scheduler.h"
 #include "robohub/devices/device.h"
 #include "robohub/devices/inverter.h"
@@ -120,6 +121,15 @@ typedef struct {
     void* read_context;
     /** How often the poll runs, in milliseconds. Zero registers no poll. */
     rh_u32 poll_interval_ms;
+    /**
+     * The board's id and device key (robohub-transport's secure.h), when its
+     * build was given them; both NULL for a plain link. With them every frame
+     * the node sends is sealed and every frame it accepts must be, and the
+     * first send opens a session with the gateway — whose answer arrives on
+     * the link, so a sealed node must have a `read`.
+     */
+    const rh_u8* secure_uid;   /* RH_SECURE_UID_SIZE bytes */
+    const rh_u8* secure_key;   /* RH_SECURE_KEY_SIZE bytes */
 } RoboHubDeviceNodeConfig;
 
 typedef struct {
@@ -137,6 +147,7 @@ typedef struct {
  */
 typedef struct RoboHubDeviceNode {
     RoboHubTransport          transport;
+    RoboHubSecure             secure;     /* used when the config names a key */
     RoboHubDeviceNodeConfig   config;
     RoboHubDeviceNodeDevice   devices[ROBOHUB_DEVICE_NODE_MAX_DEVICES];
     rh_u32                    device_count;

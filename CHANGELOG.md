@@ -2,6 +2,19 @@
 
 All notable changes to this module are recorded here, one section per release.
 
+## [0.4.3] - 2026-11-14
+
+The device nodes' links can be sealed (robohub-transport's secure.h), as the
+boards Mesh builds already are. The node runtime takes a board id and key in its
+config (device-node 0.1.1) and seals its transport with them, refusing a sealed
+config that cannot read the gateway's session answer. The gateway node takes them
+from the robohub_secret.h Mesh writes into a build, or on a host from
+RH_SECURE_UID and RH_SECURE_KEY_FILE, reads its link between readings so the
+session completes, and stops rather than falling back to plain when a key is
+named but cannot be read (gateway-node 0.1.1). The end-to-end test runs the node
+sealed, plain against a gateway that refuses plain frames, and plain against one
+that allows them, and carries the ticket the gateway's API now wants.
+
 ## [0.4.2] - 2026-11-14
 
 The Growatt driver's default map is the SPF 3000-6000 ES Plus, from Growatt's

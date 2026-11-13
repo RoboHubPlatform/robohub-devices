@@ -4,7 +4,7 @@ module:
   previous_ids:
     - robohub-devices.runtime.device-node
   type: runtime
-  version: 0.1.0
+  version: 0.1.1
   description: >
     The runtime a device node is built on: the link and its framing, the
     telemetry bridge, publishing a reading, and dispatching a control request to

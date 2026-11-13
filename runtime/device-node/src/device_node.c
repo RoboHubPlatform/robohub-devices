@@ -17,6 +17,9 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "platform.h"
+#include "registry.h"
+#include "robohub/hal/timer.h"
 #include "robohub/telemetry.h"
 #include "robohub/core/app.h"
 #include "robohub/core/core.h"
@@ -56,6 +59,13 @@ static RoboHubError node_link_task(robohub_core_task_id id, void* user)
         robohub_transport_feed(&node->transport, buffer, got);
     }
     return ROBOHUB_OK;
+}
+
+/* The session's clock: the system timer's milliseconds. */
+static rh_u32 node_now_ms(void)
+{
+    RoboHubTimer* timer = robohub_get_timer("system_timer");
+    return (timer != NULL && timer->get_millis != NULL) ? (rh_u32)timer->get_millis(timer) : 0u;
 }
 
 static RoboHubError node_app_start(void)
@@ -171,6 +181,21 @@ RoboHubError robohub_device_node_init(RoboHubDeviceNode* node,
     }
     if (ROBOHUB_FAILED(robohub_transport_init(&node->transport, &config->phy))) {
         return ROBOHUB_ERR_INVALID_ARG;
+    }
+    if ((config->secure_uid == NULL) != (config->secure_key == NULL)) {
+        return ROBOHUB_ERR_INVALID_ARG;   /* an id without a key, or a key without an id */
+    }
+    if (config->secure_uid != NULL) {
+        /* The gateway's SESSION answer comes back on the link: a node that
+         * cannot read it would never send a sealed frame. */
+        if (config->read == NULL) {
+            return ROBOHUB_ERR_INVALID_ARG;
+        }
+        if (ROBOHUB_FAILED(robohub_secure_init(&node->secure, config->secure_uid, config->secure_key,
+                                               robohub_platform_nonce, node_now_ms)) ||
+            ROBOHUB_FAILED(robohub_transport_secure(&node->transport, &node->secure))) {
+            return ROBOHUB_ERR_STATE;
+        }
     }
     RoboHubTelemetrySink sink = {
         .type = ROBOHUB_SINK_TRANSPORT,

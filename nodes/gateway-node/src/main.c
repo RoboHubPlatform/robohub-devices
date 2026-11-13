@@ -33,6 +33,15 @@
  *   RH_OPENDTU_HOST  the OpenDTU's host                (default opendtu.local)
  *   RH_OPENDTU_PORT  the OpenDTU's HTTP port           (default 80)
  *
+ *   The link's authentication (robohub-transport's secure.h): the board's id
+ *   and device key, from the robohub_secret.h Mesh writes into a build it
+ *   makes, or for a node run on a host:
+ *   RH_SECURE_UID      the board's id, 16 hex digits
+ *   RH_SECURE_KEY_FILE a file holding the device key, 32 hex digits; it should
+ *                      be readable by the node's user alone
+ *   With either, every frame is sealed and the gateway's session answer is read
+ *   from the link; with neither the link is plain.
+ *
  * @project RoboHub Platform
  * @license MIT
  */
@@ -56,6 +65,15 @@
 #include "robohub/devices/inverter/hoymiles.h"
 #include "max485_module.h"   /* max485-module: the RS485 carrier */
 #include "protocol.h"       /* the generated schema: PowerReading */
+#include "robohub/secure.h"
+
+/* The board's id and key, written into this build by Mesh when it planned the
+ * board, and tracked by no repository. */
+#if defined(__has_include)
+#  if __has_include("robohub_secret.h")
+#    include "robohub_secret.h"
+#  endif
+#endif
 
 /* -------------------------------------------------------------------------- */
 /*  Configuration from the environment                                        */
@@ -87,6 +105,20 @@ typedef struct {
 } Link;
 
 static Link g_link;
+
+/* What has arrived from the gateway, without waiting: a session answer, a
+ * command. Zero when nothing has. */
+static rh_size link_read(Link* link, rh_u8* data, rh_size cap)
+{
+    if (link->tcp) {
+        int got = robohub_socket_recv(link->socket, data, cap, 0u);
+        return got > 0 ? (rh_size)got : 0u;
+    }
+    if (link->uart != NULL && link->uart->read_available != NULL) {
+        return link->uart->read_available(link->uart, data, cap);
+    }
+    return 0u;
+}
 
 static int link_write(const rh_u8* data, rh_size len, void* context)
 {
@@ -205,6 +237,77 @@ static RoboHubError publish(RoboHubTransport* transport,
 /* -------------------------------------------------------------------------- */
 
 static RoboHubTransport g_transport;
+static RoboHubSecure    g_secure;
+
+static int hex_digit(char c)
+{
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return -1;
+}
+
+/* Exactly `n` bytes of hex, ignoring a trailing line break; anything else is
+ * refused, so a key file that is short or has a stray character is no key. */
+static rh_bool hex_bytes(const char* text, rh_u8* out, rh_size n)
+{
+    rh_size i = 0u;
+    for (; i < n; i++) {
+        int hi = hex_digit(text[2u * i]);
+        int lo = (hi < 0) ? -1 : hex_digit(text[2u * i + 1u]);
+        if (lo < 0) {
+            return RH_FALSE;
+        }
+        out[i] = (rh_u8)((hi << 4) | lo);
+    }
+    const char* rest = text + 2u * n;
+    while (*rest == '\n' || *rest == '\r') {
+        rest++;
+    }
+    return *rest == '\0';
+}
+
+static rh_u32 node_now_ms(void)
+{
+    RoboHubTimer* timer = robohub_get_timer("system_timer");
+    return (timer != NULL && timer->get_millis != NULL) ? (rh_u32)timer->get_millis(timer) : 0u;
+}
+
+/* The board's id and key: the build's, else the environment's. Answers whether
+ * the link is sealed; a key named but unreadable stops the node rather than
+ * letting it fall back to a plain link. */
+static int secure_link(void)
+{
+    rh_u8 uid[RH_SECURE_UID_SIZE];
+    rh_u8 key[RH_SECURE_KEY_SIZE];
+#if defined(RH_SECURE_PROVISIONED)
+    memcpy(uid, RH_DEVICE_UID, sizeof(uid));
+    memcpy(key, RH_DEVICE_KEY, sizeof(key));
+#else
+    const char* uid_text = env_str("RH_SECURE_UID", "");
+    const char* key_path = env_str("RH_SECURE_KEY_FILE", "");
+    if (uid_text[0] == '\0' && key_path[0] == '\0') {
+        return 0;
+    }
+    char key_text[80] = { 0 };
+    FILE* file = (key_path[0] != '\0') ? fopen(key_path, "r") : NULL;
+    if (file != NULL) {
+        size_t got = fread(key_text, 1u, sizeof(key_text) - 1u, file);
+        key_text[got] = '\0';
+        fclose(file);
+    }
+    if (!hex_bytes(uid_text, uid, sizeof(uid)) || !hex_bytes(key_text, key, sizeof(key))) {
+        emit("robohub-device-node: RH_SECURE_UID or RH_SECURE_KEY_FILE is not a board id and key\n");
+        return -1;
+    }
+#endif
+    if (ROBOHUB_FAILED(robohub_secure_init(&g_secure, uid, key, robohub_platform_nonce, node_now_ms)) ||
+        ROBOHUB_FAILED(robohub_transport_secure(&g_transport, &g_secure))) {
+        return -1;
+    }
+    memset(key, 0, sizeof(key));
+    return 1;
+}
 
 int main(void)
 {
@@ -253,6 +356,11 @@ int main(void)
     if (ROBOHUB_FAILED(robohub_transport_init(&g_transport, &phy))) {
         return 1;
     }
+    int sealed = secure_link();
+    if (sealed < 0) {
+        return 1;
+    }
+    emit(sealed > 0 ? "robohub-device-node: link authenticated\n" : "robohub-device-node: link plain\n");
 
     RoboHubTimer* timer = robohub_get_timer("system_timer");
     rh_u32 interval = env_u32("INTERVAL_MS", 5000u);
@@ -279,8 +387,22 @@ int main(void)
             emit("robohub-device-node: the device did not answer\n");
         }
 
-        if (timer != NULL && timer->delay_ms != NULL) {
-            timer->delay_ms(timer, interval);
+        /* Wait out the interval reading the link: the gateway's session answer
+         * and any command arrive here, and a sealed link needs the former
+         * before its next reading can be sent. */
+        rh_u32 waited = 0u;
+        while (waited < interval) {
+            rh_u8 incoming[128];
+            rh_size got = link_read(&g_link, incoming, sizeof(incoming));
+            if (got > 0u) {
+                robohub_transport_feed(&g_transport, incoming, got);
+                continue;
+            }
+            if (timer == NULL || timer->delay_ms == NULL) {
+                break;
+            }
+            timer->delay_ms(timer, 20u);
+            waited += 20u;
         }
     }
 }
