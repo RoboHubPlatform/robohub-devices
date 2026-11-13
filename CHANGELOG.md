@@ -2,6 +2,14 @@
 
 All notable changes to this module are recorded here, one section per release.
 
+## [0.4.0] - 2026-11-13
+
+A device says what it can be told to do as data, for every transport it speaks
+(`actions:` — an HTTP path, an MQTT topic and payload), and how it is read over
+MQTT (`telemetry_mqtt`, `telemetry_mqtt_fields`, the same shape as the HTTP ones).
+The Shelly Plug M Gen3 carries both, so an application switches it without knowing
+it is a Shelly.
+
 ## [0.3.0] - 2026-11-05
 
 Every device integration now declares its telemetry: an interface kind, and for

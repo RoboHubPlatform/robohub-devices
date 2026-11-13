@@ -15,3 +15,15 @@ JSON-RPC. The integration presents `RoboHubSwitch` and produces a
 
 The same cached state and power reading are produced either way, so a gateway,
 a relay or the Mesh application can treat the plug like any other switch.
+
+## In a plan
+
+The manifest describes both transports as data, so an application reads and
+switches the plug without knowing it is a Shelly:
+
+- **HTTP** — `telemetry.http_path` and `telemetry_http_fields` say what to read;
+  `actions.switch.http` how to switch it. The plan names the plug's address.
+- **MQTT** — `telemetry_mqtt.status_topic` and `telemetry_mqtt_fields` say what to
+  read, `actions.switch.mqtt_topic` and `mqtt_payload` how to switch it. The plan
+  names the plug's device id (`shellyplugmgen3-<id>`) as its address, and the plug
+  is pointed at the keeper's broker, with a broker user the keeper made for it.
