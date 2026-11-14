@@ -77,3 +77,5 @@ The protocol copies know `RELAYED`.
 ## [0.5.0] - 2026-11-14
 
 The host node keeps its key as `<epoch>:<hex>` and rewrites it when the gateway rotates it. The end-to-end power test matches what the gateway allows: plain frames only on a serial link that allows them.
+
+The protocol copies know `SESSION_RESET`; the host nodes act on it through the transport.
