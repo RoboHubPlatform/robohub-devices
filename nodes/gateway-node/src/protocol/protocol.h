@@ -27,6 +27,8 @@ static inline double robohub_v1_get_f64(const uint8_t* in) { uint64_t bits = rob
 
 typedef enum {
     MESSAGE_ID_RELAYED = 19,
+    MESSAGE_ID_REKEY = 20,
+    MESSAGE_ID_REKEY_ACK = 21,
     MESSAGE_ID_HELLO = 257,
     MESSAGE_ID_ANNOUNCE = 257,
     MESSAGE_ID_TELEMETRY = 513,

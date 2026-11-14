@@ -191,8 +191,12 @@ RoboHubError robohub_device_node_init(RoboHubDeviceNode* node,
         if (config->read == NULL) {
             return ROBOHUB_ERR_INVALID_ARG;
         }
-        if (ROBOHUB_FAILED(robohub_secure_init(&node->secure, config->secure_uid, config->secure_key,
-                                               robohub_platform_nonce, node_now_ms)) ||
+        if (ROBOHUB_FAILED(robohub_secure_init_epoch(&node->secure, config->secure_uid, config->secure_key,
+                                                     config->secure_key_epoch, config->secure_key_scope,
+                                                     robohub_platform_nonce,
+                                                     node_now_ms)) ||
+            ROBOHUB_FAILED(robohub_secure_on_store(&node->secure, config->secure_store,
+                                                   config->secure_store_user)) ||
             ROBOHUB_FAILED(robohub_transport_secure(&node->transport, &node->secure))) {
             return ROBOHUB_ERR_STATE;
         }

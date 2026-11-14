@@ -13,11 +13,16 @@ the gateway's uplink, and the gateway lists the inverter and serves its figures.
 
     GATEWAY_BIN=/path/to/robohub-gateway tests/e2e_power.py
 
-It runs three times: with the link sealed (the node given a board id and key,
-the gateway the project key they derive from), plain against a gateway that
-refuses plain frames — the inverter must not appear — and plain against one
-that allows them, as a deployment migrating its boards does. The gateway's
-REST API wants a ticket; the test signs one with a key it makes for itself.
+It runs five times: with the link sealed (the node given a board id and key,
+the gateway the project key they derive from) over the gateway's uplink; plain
+over the uplink against a gateway that refuses plain frames, and against one that
+allows them — the inverter must not appear either way, since the uplink is a
+network and never takes a plain frame (gateway 0.6.0 on); and plain over the
+gateway's serial link, where ALLOW_PLAIN_FRAMES=1 lets a deployment migrating its
+boards hear them, and where without it they are refused. The serial link is two
+pseudo-terminals this test joins, one the node's `uart0` and one the gateway's
+`SERIAL_PORT`. The gateway's REST API wants a ticket; the test signs one with a
+key it makes for itself.
 
 NODE_BIN defaults to this repository's node build. The gateway binary is another
 repository's, so it is named by the environment.
@@ -27,6 +32,8 @@ import hmac
 import http.client as httpclient
 import json
 import os
+import pty
+import select
 import socket
 import subprocess
 import shutil
@@ -142,19 +149,58 @@ def main():
         sealed = {"RH_SECURE_UID": uid.hex(), "RH_SECURE_KEY_FILE": device_key_file}
         failures = []
         failures += run("sealed", work, key_file, sealed, {}, expect_listed=True)
-        failures += run("plain, refused", work, key_file, {}, {}, expect_listed=False)
-        failures += run("plain, allowed", work, key_file, {}, {"ALLOW_PLAIN_FRAMES": "1"}, expect_listed=True)
+        failures += run("plain on the uplink, refused", work, key_file, {}, {}, expect_listed=False)
+        failures += run("plain on the uplink, refused even when allowed", work, key_file, {},
+                        {"ALLOW_PLAIN_FRAMES": "1"}, expect_listed=False)
+        failures += run("plain on the serial link, refused", work, key_file, {}, {}, expect_listed=False,
+                        link="uart")
+        failures += run("plain on the serial link, allowed", work, key_file, {}, {"ALLOW_PLAIN_FRAMES": "1"},
+                        expect_listed=True, link="uart")
     finally:
         shutil.rmtree(work, ignore_errors=True)
     if failures:
         for failure in failures:
             print("FAIL:", failure)
         return 1
-    print("e2e power: sealed, refused and allowed all as expected")
+    print("e2e power: sealed, refused and allowed (serial only) all as expected")
     return 0
 
 
-def run(label, home, key_file, node_extra, gateway_extra, expect_listed):
+class SerialBridge:
+    """Two pseudo-terminals joined end to end: the node opens one slave as its
+    uart0, the gateway the other as its SERIAL_PORT, and what either writes the
+    other reads."""
+
+    def __init__(self):
+        self.a_master, a_slave = pty.openpty()
+        self.b_master, b_slave = pty.openpty()
+        self.node_path = os.ttyname(a_slave)
+        self.gateway_path = os.ttyname(b_slave)
+        self.running = True
+        self.thread = threading.Thread(target=self.pump, daemon=True)
+        self.thread.start()
+
+    def pump(self):
+        pairs = {self.a_master: self.b_master, self.b_master: self.a_master}
+        while self.running:
+            ready, _, _ = select.select(list(pairs), [], [], 0.1)
+            for fd in ready:
+                try:
+                    data = os.read(fd, 4096)
+                except OSError:
+                    continue
+                if data:
+                    try:
+                        os.write(pairs[fd], data)
+                    except OSError:
+                        pass
+
+    def close(self):
+        self.running = False
+        self.thread.join(timeout=2)
+
+
+def run(label, home, key_file, node_extra, gateway_extra, expect_listed, link="tcp"):
     # The fake OpenDTU.
     opendtu = HTTPServer((HOST, 0), OpenDTU)
     opendtu_port = opendtu.server_address[1]
@@ -174,6 +220,10 @@ def run(label, home, key_file, node_extra, gateway_extra, expect_listed):
     })
     env.pop("ALLOW_PLAIN_FRAMES", None)
     env.update(gateway_extra)
+    bridge = None
+    if link == "uart":
+        bridge = SerialBridge()
+        env["SERIAL_PORT"] = bridge.gateway_path
     gateway = subprocess.Popen([GATEWAY_BIN], env=env, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT, text=True)
 
@@ -181,6 +231,8 @@ def run(label, home, key_file, node_extra, gateway_extra, expect_listed):
     if not wait_ready(rest_port):
         gateway.kill()
         opendtu.shutdown()
+        if bridge is not None:
+            bridge.close()
         return [f"{label}: the gateway did not become ready:\n" + gateway.stdout.read()]
 
     node_env = dict(os.environ)
@@ -188,7 +240,7 @@ def run(label, home, key_file, node_extra, gateway_extra, expect_listed):
         "RH_DEVICE": "hoymiles",
         "RH_OPENDTU_HOST": HOST,
         "RH_OPENDTU_PORT": str(opendtu_port),
-        "RH_NODE_LINK": "tcp",
+        "RH_NODE_LINK": link,
         "RH_GATEWAY_HOST": HOST,
         "RH_GATEWAY_PORT": str(uplink_port),
         "AREA": str(AREA),
@@ -197,6 +249,8 @@ def run(label, home, key_file, node_extra, gateway_extra, expect_listed):
     })
     for name in ("RH_SECURE_UID", "RH_SECURE_KEY_FILE"):
         node_env.pop(name, None)
+    if bridge is not None:
+        node_env["RHO_UART0"] = bridge.node_path
     node_env.update(node_extra)
     node = subprocess.Popen([NODE_BIN], env=node_env, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, text=True)
@@ -247,6 +301,8 @@ def run(label, home, key_file, node_extra, gateway_extra, expect_listed):
         for proc in (node, gateway):
             proc.kill()
         opendtu.shutdown()
+        if bridge is not None:
+            bridge.close()
 
     if failures:
         print(f"\n[{label}] node output:\n", node.stdout.read())

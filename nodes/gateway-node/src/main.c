@@ -37,10 +37,18 @@
  *   and device key, from the robohub_secret.h Mesh writes into a build it
  *   makes, or for a node run on a host:
  *   RH_SECURE_UID      the board's id, 16 hex digits
- *   RH_SECURE_KEY_FILE a file holding the device key, 32 hex digits; it should
- *                      be readable by the node's user alone
+ *   RH_SECURE_KEY_FILE a file holding the device key: `<epoch>:<32 hex digits>`,
+ *                      or the 32 hex digits alone, which is epoch 0. It should
+ *                      be readable by the node's user alone.
  *   With either, every frame is sealed and the gateway's session answer is read
  *   from the link; with neither the link is plain.
+ *
+ *   When the gateway rotates the key (REKEY), the node rewrites the key file
+ *   with the new epoch and key — a temporary file beside it, 0600, then a
+ *   rename — and says its next hello with the new key. A key file has no key
+ *   scope: Mesh hands a host node its gateway's current key. A build carrying
+ *   robohub_secret.h keeps a rotated key in the platform's keystore instead,
+ *   under the build's RH_KEY_SCOPE.
  *
  * @project RoboHub Platform
  * @license MIT
@@ -50,6 +58,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if defined(__unix__) || defined(__APPLE__)
+#  include <fcntl.h>
+#  include <sys/stat.h>
+#  include <unistd.h>
+#  define RH_NODE_KEY_FILE_WRITABLE 1
+#endif
 
 #include "platform.h"
 #include "registry.h"
@@ -267,6 +281,68 @@ static rh_bool hex_bytes(const char* text, rh_u8* out, rh_size n)
     return *rest == '\0';
 }
 
+/* A key file: `<epoch>:<hex>`, or the hex alone (epoch 0, as it was written
+ * before keys rotated). */
+static rh_bool key_file_parse(const char* text, rh_u32* epoch, rh_u8* key, rh_size n)
+{
+    *epoch = 0u;
+    const char* colon = strchr(text, ':');
+    if (colon != NULL) {
+        if (colon == text) {
+            return RH_FALSE;
+        }
+        rh_u32 value = 0u;
+        for (const char* p = text; p < colon; p++) {
+            if (*p < '0' || *p > '9' || value > 400000000u) {
+                return RH_FALSE;
+            }
+            value = value * 10u + (rh_u32)(*p - '0');
+        }
+        *epoch = value;
+        text = colon + 1;
+    }
+    return hex_bytes(text, key, n);
+}
+
+#if defined(RH_NODE_KEY_FILE_WRITABLE)
+/* The key file the node read its key from, rewritten when the key is rotated. */
+static char g_key_path[512];
+
+/* Write the rotated key over the key file: a temporary file beside it, readable
+ * by this user alone, flushed to the disk, then renamed over the old one, so the
+ * file holds the old key or the new one and never half of either. */
+static int key_file_store(const rh_u8 key[RH_SECURE_KEY_SIZE], rh_u32 epoch, void* user)
+{
+    (void)user;
+    if (g_key_path[0] == '\0') {
+        return -1;
+    }
+    char temporary[sizeof(g_key_path) + 16];
+    char text[16 + 2 * RH_SECURE_KEY_SIZE + 4];
+    if (snprintf(temporary, sizeof(temporary), "%s.tmp", g_key_path) >= (int)sizeof(temporary)) {
+        return -1;
+    }
+    int at = snprintf(text, sizeof(text), "%lu:", (unsigned long)epoch);
+    for (rh_size i = 0u; i < RH_SECURE_KEY_SIZE; i++) {
+        at += snprintf(text + at, sizeof(text) - (size_t)at, "%02x", key[i]);
+    }
+    text[at++] = '\n';
+    int fd = open(temporary, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+    if (fd < 0) {
+        return -1;
+    }
+    int ok = fchmod(fd, 0600) == 0 && write(fd, text, (size_t)at) == (ssize_t)at && fsync(fd) == 0;
+    ok = (close(fd) == 0) && ok;
+    memset(text, 0, sizeof(text));
+    if (!ok || rename(temporary, g_key_path) != 0) {
+        (void)unlink(temporary);
+        return -1;
+    }
+    emit("robohub-device-node: the gateway rotated this node's key; the key file holds the new one\n");
+    return 0;
+}
+#endif
+
 static rh_u32 node_now_ms(void)
 {
     RoboHubTimer* timer = robohub_get_timer("system_timer");
@@ -280,9 +356,20 @@ static int secure_link(void)
 {
     rh_u8 uid[RH_SECURE_UID_SIZE];
     rh_u8 key[RH_SECURE_KEY_SIZE];
+    rh_u32 epoch = 0u;
+    int key_file = 0;
+    /* A key file carries no scope: a host node takes only keys stored without
+     * one, and is handed its gateway's current key by Mesh. */
+    const rh_u8* scope = NULL;
 #if defined(RH_SECURE_PROVISIONED)
     memcpy(uid, RH_DEVICE_UID, sizeof(uid));
     memcpy(key, RH_DEVICE_KEY, sizeof(key));
+#  if defined(RH_DEVICE_KEY_EPOCH)
+    epoch = (rh_u32)RH_DEVICE_KEY_EPOCH;
+#  endif
+#  if defined(RH_HAS_KEY_SCOPE)
+    scope = RH_KEY_SCOPE;
+#  endif
 #else
     const char* uid_text = env_str("RH_SECURE_UID", "");
     const char* key_path = env_str("RH_SECURE_KEY_FILE", "");
@@ -296,15 +383,30 @@ static int secure_link(void)
         key_text[got] = '\0';
         fclose(file);
     }
-    if (!hex_bytes(uid_text, uid, sizeof(uid)) || !hex_bytes(key_text, key, sizeof(key))) {
+    if (!hex_bytes(uid_text, uid, sizeof(uid)) || !key_file_parse(key_text, &epoch, key, sizeof(key))) {
+        memset(key_text, 0, sizeof(key_text));
         emit("robohub-device-node: RH_SECURE_UID or RH_SECURE_KEY_FILE is not a board id and key\n");
         return -1;
     }
+    memset(key_text, 0, sizeof(key_text));
+#  if defined(RH_NODE_KEY_FILE_WRITABLE)
+    key_file = snprintf(g_key_path, sizeof(g_key_path), "%s", key_path) < (int)sizeof(g_key_path);
+    if (!key_file) {
+        g_key_path[0] = '\0';
+    }
+#  endif
 #endif
-    if (ROBOHUB_FAILED(robohub_secure_init(&g_secure, uid, key, robohub_platform_nonce, node_now_ms)) ||
+    if (ROBOHUB_FAILED(robohub_secure_init_epoch(&g_secure, uid, key, epoch, scope, robohub_platform_nonce, node_now_ms)) ||
         ROBOHUB_FAILED(robohub_transport_secure(&g_transport, &g_secure))) {
         return -1;
     }
+#if defined(RH_NODE_KEY_FILE_WRITABLE)
+    /* A node whose key came from a file keeps a rotated key there. */
+    if (key_file) {
+        (void)robohub_secure_on_store(&g_secure, key_file_store, NULL);
+    }
+#endif
+    (void)key_file;
     memset(key, 0, sizeof(key));
     return 1;
 }

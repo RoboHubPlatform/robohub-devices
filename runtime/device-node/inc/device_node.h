@@ -130,6 +130,25 @@ typedef struct {
      */
     const rh_u8* secure_uid;   /* RH_SECURE_UID_SIZE bytes */
     const rh_u8* secure_key;   /* RH_SECURE_KEY_SIZE bytes */
+    /**
+     * The epoch of `secure_key` (RH_DEVICE_KEY_EPOCH in robohub_secret.h, or the
+     * epoch a host's key file names); 0 for a key that was never rotated. A key
+     * the platform's keystore holds of a newer epoch is used instead.
+     */
+    rh_u32 secure_key_epoch;
+    /**
+     * The build's key scope (RH_KEY_SCOPE in robohub_secret.h, 8 bytes), kept
+     * with a rotated key so a key stored for another gateway is not used; NULL
+     * for a build without one (a host node whose key comes from a file).
+     */
+    const rh_u8* secure_key_scope;
+    /**
+     * Where a key the gateway rotates this node to (REKEY) is kept: NULL for the
+     * platform's keystore (robohub/keystore.h), or the node's own store — a host
+     * node rewriting its key file. Returns 0 when the key is stored durably.
+     */
+    RoboHubSecureStore secure_store;
+    void* secure_store_user;
 } RoboHubDeviceNodeConfig;
 
 typedef struct {
