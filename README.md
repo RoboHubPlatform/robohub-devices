@@ -191,3 +191,7 @@ identity: `AREA` is the project area and `NODE` is the device node's index in
 the plan, which the device page shows. The Growatt Modbus integration and the
 GPIO relay use that path; the gateway's outbox turns their reading into one
 series per signal.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
