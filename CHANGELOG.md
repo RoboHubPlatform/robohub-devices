@@ -69,3 +69,7 @@ reader gained boolean fields for `"output":true`.
 
 The device integrations: Growatt and Hoymiles inverters, a relay, the HTTP and
 JSON clients, and the device-node runtime.
+
+## [0.4.4] - 2026-11-14
+
+The protocol copies know `RELAYED`.

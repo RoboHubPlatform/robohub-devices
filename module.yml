@@ -14,7 +14,7 @@ module:
   previous_ids:
     - robohub-devices
   type: collection
-  version: 0.4.3
+  version: 0.4.4
   license: "MIT"
   description: >
     Device integrations for the RoboHub Platform: inverters, meters and other

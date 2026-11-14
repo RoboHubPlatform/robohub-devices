@@ -26,6 +26,7 @@ static inline void robohub_v1_put_f64(uint8_t* out, double v) { uint64_t bits; m
 static inline double robohub_v1_get_f64(const uint8_t* in) { uint64_t bits = robohub_v1_get_u64(in); double v; memcpy(&v, &bits, 8); return v; }
 
 typedef enum {
+    MESSAGE_ID_RELAYED = 19,
     MESSAGE_ID_HELLO = 257,
     MESSAGE_ID_ANNOUNCE = 257,
     MESSAGE_ID_TELEMETRY = 513,
