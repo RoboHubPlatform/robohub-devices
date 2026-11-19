@@ -5,9 +5,10 @@
 # half a configuration registers:
 #
 #   host  tests/run.sh: the protocols (Modbus, JSON, HTTP), the Growatt, Hoymiles,
-#         Shelly plug and relay drivers, and the gateway node's key file
-#         (tests/host-tests.plan), built against the sibling checkouts. The ctest
-#         kind configures, builds and runs it on every `rho test`.
+#         Shelly plug, Sonoff S60TPF and relay drivers, and the gateway node's key
+#         file (tests/host-tests.plan), built against the sibling checkouts; then
+#         each Sonoff test again by name, a case of its own. The ctest kind
+#         configures, builds and runs it on every `rho test`.
 #   e2e   tests/e2e_*.py: the node and a real gateway together. They need another
 #         repository's binary (GATEWAY_BIN) and this repository's node builds;
 #         a script that cannot run here exits 77, which CTest records as skipped

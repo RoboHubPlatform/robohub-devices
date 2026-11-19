@@ -2,6 +2,49 @@
 
 All notable changes to this module are recorded here, one section per release.
 
+## [0.6.0] - 2026-11-19
+
+A new device: the **Sonoff S60TPF**, reflashed with Tasmota, over MQTT
+(`devices/plug/sonoff-s60tpf` 0.1.0, ADR-0002, DEVS-0010, DEVS-PLUG-0005..0011).
+The module is named for the hardware and its manifest says `firmware: tasmota`.
+Its driver presents `RoboHubPlug` for a device node: it subscribes to
+`<prefix>/stat/RESULT`, `stat/POWER`, `tele/STATE`, `tele/SENSOR` and `tele/LWT`
+(Tasmota with `FullTopic %topic%/%prefix%/`), folds each into one cached state,
+and switches by publishing `true`/`false`, not retained, to `<prefix>/cmnd/POWER`.
+The state changes only when the plug reports it, never from the request. After
+an `Offline` last will, or three telemetry periods without a word, the plug is
+unreachable (no state, no reading) until it is heard again; a payload that is not
+the JSON or the ON/OFF word its topic carries changes nothing and is a protocol
+error; a refused login or publish is the client's error, not an off switch. The
+prefix is refused when empty, over 128 bytes, absolute, or holding `#`, `+` or a
+space. The module carries no credential: the broker login is the platform
+client's.
+
+The manifest declares the signals switch, power, voltage, current, energy today
+and energy total, several status topics (`status_topics`), the field lines with
+the state typed `onoff` and the bare `stat/POWER` read through the path `$`,
+`online_up: "Online"` for the LWT, and the switch action. The field-line grammar
+(README, DEVS-0009) now documents `status_topics`, `$`, `onoff` and `online_up`;
+the Shelly manifest is unchanged and still valid. Reading these needs Mesh's side
+of the same contract.
+
+The module's page gives the reflash with mains safety first (unplugged
+throughout), the serial wiring, a backup of the 4 MB flash, `tasmota32c3` with
+esptool, the template, the Tasmota commands (`Topic`, `FullTopic`, the keeper's
+broker user, `WebPassword`, `TelePeriod` 10-60 s) and the calibration, a manual
+step. Stock eWeLink firmware is not supported (eWeLink LAN mode is future work);
+the UK S60TPG is likely identical but untested.
+
+`tests/test_sonoff.c` feeds the driver, and the manifest's field lines, the
+Tasmota documents (RESULT, POWER, STATE, SENSOR, LWT Online/Offline) and checks
+that both read the same values, plus silence, malformed payloads, ON/OFF in any
+case, bad prefixes, a refused publish or login, and that a request never becomes
+the cached state. Each of its tests is also a CTest case of its own, so a
+requirement's evidence is the test that verifies it. DEVS-PLUG-0009 and
+DEVS-PLUG-0011 say the maintainer's review decisions (two state lines, `online_up`;
+eWeLink LAN mode as future work, the S60TPG, TelePeriod 10-60 s, calibration as a
+manual step) and were approved again.
+
 ## [0.5.2] - 2026-11-19
 
 Security: the gateway node refuses a key file other users can reach. It read the

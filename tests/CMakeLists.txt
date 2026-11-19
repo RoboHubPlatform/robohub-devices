@@ -9,6 +9,8 @@
 #                   and run by the ecosystem's runner in robohub
 #                   (shared/tests/run-host-tests.sh) against the sibling
 #                   checkouts of robohub-common and robohub-linux.
+#   test_sonoff_*   the Sonoff S60TPF's tests, one case each, run by name from
+#                   the binary host-tests built.
 #   e2e-*           the end-to-end scripts, which run a real gateway and a real
 #                   node. They need GATEWAY_BIN (another repository's binary)
 #                   and this repository's node build, and exit 77 when either is
@@ -62,7 +64,32 @@ endforeach()
 # the system's temporary directory.
 add_test(NAME host-tests COMMAND "${ROBOHUB_SH}" "${ROBOHUB_DEVICES_ROOT}/tests/run.sh")
 set_tests_properties(host-tests PROPERTIES ENVIRONMENT
-    "ROBOHUB_COMMON_DIR=${ROBOHUB_WORKSPACE_DIR}/robohub-common;ROBOHUB_LINUX_DIR=${ROBOHUB_WORKSPACE_DIR}/robohub-linux;ROBOHUB_ORCHESTRATOR_DIR=${ROBOHUB_WORKSPACE_DIR}/robohub;TMPDIR=${CMAKE_CURRENT_BINARY_DIR}")
+    "ROBOHUB_COMMON_DIR=${ROBOHUB_WORKSPACE_DIR}/robohub-common;ROBOHUB_LINUX_DIR=${ROBOHUB_WORKSPACE_DIR}/robohub-linux;ROBOHUB_ORCHESTRATOR_DIR=${ROBOHUB_WORKSPACE_DIR}/robohub;TMPDIR=${CMAKE_CURRENT_BINARY_DIR}"
+    FIXTURES_SETUP robohub_devices_host_build)
+
+# The Sonoff S60TPF's tests, each run again by name from the binary host-tests
+# built (the runner builds into $TMPDIR/robohub-<module>-tests), so each is a
+# case of its own and a requirement's evidence is the test that verifies it.
+# They need host-tests to have built the binary, and are not run without it.
+get_filename_component(ROBOHUB_DEVICES_NAME "${ROBOHUB_DEVICES_ROOT}" NAME)
+set(ROBOHUB_DEVICES_HOST_OUT "${CMAKE_CURRENT_BINARY_DIR}/robohub-${ROBOHUB_DEVICES_NAME}-tests")
+foreach(test
+        test_sonoff_topics
+        test_sonoff_result_and_power
+        test_sonoff_state_and_sensor
+        test_sonoff_onoff_any_case
+        test_sonoff_requested_state_not_cached
+        test_sonoff_publish_refused
+        test_sonoff_offline_lwt
+        test_sonoff_offline_by_silence
+        test_sonoff_malformed
+        test_sonoff_bad_prefixes
+        test_sonoff_manifest_matches_driver
+        test_sonoff_manifest_declares
+        test_sonoff_docs_cover_preparation)
+    add_test(NAME ${test} COMMAND "${ROBOHUB_DEVICES_HOST_OUT}/test_sonoff" ${test})
+    set_tests_properties(${test} PROPERTIES FIXTURES_REQUIRED robohub_devices_host_build)
+endforeach()
 endif()
 
 # The end-to-end scripts. GATEWAY_BIN, and NODE_BIN when it is set, reach them

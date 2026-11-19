@@ -35,6 +35,9 @@ devices/
         hoymiles-hms/   a Hoymiles microinverter through an OpenDTU
     actuator/
         relay/          a relay (on/off output) over a GPIO
+    plug/
+        shelly-plug-m-gen3/  a Shelly Plug M Gen3 over HTTP RPC or MQTT
+        sonoff-s60tpf/       a Sonoff S60TPF reflashed with Tasmota, over MQTT
 apps/
     smart-plug/     a custom device: a temperature sensor and a relay composed
 nodes/
@@ -69,6 +72,20 @@ grid meter and no load, so those are absent rather than zero.
 
 The two DC inputs (the two panels) are inputs to the inverter, not devices of
 their own, and the document's `total` object is what is read.
+
+### Smart plugs
+
+Both present `RoboHubPlug` (a switch and a power meter) and are described in
+their manifests for Mesh, which reads and switches them without the C driver.
+
+- **Shelly Plug M Gen3** — over HTTP JSON-RPC or MQTT, as the plug ships.
+- **Sonoff S60TPF** — only **reflashed with Tasmota** (`tasmota32c3`, over the
+  serial pads, unplugged from mains throughout) and reached over MQTT through
+  the keeper's broker. Stock eWeLink firmware is not supported (ADR-0002). The
+  state is what the plug reports, and it is unreachable after an `Offline` last
+  will or three telemetry periods of silence; the module's page gives the
+  reflash, the Tasmota commands (`TelePeriod` 10–60 s) and the calibration. The
+  UK S60TPG is likely identical but untested.
 
 ## Reading and control
 
@@ -136,8 +153,9 @@ RH_DEVICE=hoymiles RH_OPENDTU_HOST=192.168.1.50 AREA=7 NODE=21 ./gateway-node
 The protocols and the devices have host tests under `tests/`: the Modbus framing
 and its failures, the JSON reader's nesting and its accuracy, the Growatt decode
 (with a test map, independent of the default), the Hoymiles read over a real
-loopback socket through the real HTTP client, and the relay's wiring and
-read-back.
+loopback socket through the real HTTP client, the relay's wiring and read-back,
+and the two plugs over a fake broker client — for the Sonoff S60TPF, its
+manifest's field lines applied to the same Tasmota payloads as the driver.
 
 ```sh
 ROBOHUB_COMMON_DIR=/path/to/robohub-common \
@@ -184,8 +202,37 @@ Mesh publishes, `field` is the stored name, and `json/path` walks the document
 the one the signal declares: the Shelly reports energy in Wh, so its line uses
 `0.001` to store kWh.
 
-HTTP devices — the Shelly plug and the Hoymiles through an OpenDTU — are read by
-Mesh directly and stored under the device node's plan identity. An inverter or
+`type` is `f32` (a number), `bool` (a JSON `true`/`false`) or `onoff` (a switch
+word: `ON`/`OFF` in any letter case, `true`/`false`, `1`/`0`; anything else is a
+protocol error for that field, which keeps its last value). The path `$` is the
+whole payload, for a topic whose payload is a bare value rather than JSON. Two
+lines may name the same field by different paths; whichever a message carries
+applies, and a path a message does not carry leaves the field as it was.
+
+Over MQTT, `telemetry_mqtt` names where the lines are read from: one
+`status_topic`, or a list `status_topics` merged into one reading (each message
+changes only the fields whose path it carries, and the newest value of each
+wins), and the `online_topic` with `online_up`, the payload that means online
+(`true` when not given; compared letter for letter). `{prefix}` is the device's
+address in the plan:
+
+```yaml
+telemetry_mqtt:                       # the Sonoff S60TPF running Tasmota
+  status_topics:
+    - "{prefix}/stat/RESULT"
+    - "{prefix}/stat/POWER"
+    - "{prefix}/tele/STATE"
+    - "{prefix}/tele/SENSOR"
+  online_topic: "{prefix}/tele/LWT"
+  online_up: "Online"
+telemetry_mqtt_fields:
+  - "switch|state||onoff|POWER|1"     # {"POWER":"ON"} on RESULT and STATE
+  - "switch|state||onoff|$|1"         # the bare ON/OFF on stat/POWER
+  - "power|power_w|W|f32|ENERGY/Power|1"
+```
+
+HTTP devices — the Shelly plug and the Hoymiles through an OpenDTU — and MQTT
+devices — the Shelly plug and the Sonoff S60TPF — are read by Mesh directly and stored under the device node's plan identity. An inverter or
 a relay that is carried by a device node publishes its frame under the same
 identity: `AREA` is the project area and `NODE` is the device node's index in
 the plan, which the device page shows. The Growatt Modbus integration and the

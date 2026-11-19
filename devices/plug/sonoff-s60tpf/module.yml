@@ -1,0 +1,156 @@
+module:
+  name: robohub-device-sonoff-s60tpf
+  id: robohub.device.sonoff-s60tpf
+  type: device
+  version: 0.1.0
+  description: >
+    Sonoff S60TPF Wi-Fi plug reflashed with Tasmota, as a switch and power
+    meter over MQTT. The state is what the plug reports; stock eWeLink firmware
+    is not supported.
+  maintainer: "Aurel Miron"
+  license: "MIT"
+  created: "2026-11-19"
+
+build:
+  language: c
+  standard: c11
+  include_dirs:
+    - inc
+  sources:
+    - src/sonoff_s60tpf.c
+
+depends:
+  - name: robohub-common
+    type: c
+    path: ${ROBOHUB_WORKSPACE}/robohub-common
+    git: https://github.com/RoboHubPlatform/robohub-common
+    branch: main
+  - name: robohub-json
+    type: c
+    path: ${ROBOHUB_WORKSPACE}/robohub-devices/protocols/json
+  - name: robohub-mqtt
+    type: c
+    path: ${ROBOHUB_WORKSPACE}/robohub-devices/protocols/mqtt
+
+config:
+  dialect: linux
+  kconfig_fragments:
+    - Kconfig
+
+exports:
+  headers:
+    - robohub/devices/plug/sonoff_s60tpf.h
+  cmake:
+    target: "rho::robohub-device-sonoff-s60tpf"
+    include_dirs:
+      - inc
+    link_libraries:
+      - rho::robohub-common
+      - rho::robohub-json
+      - rho::robohub-mqtt
+
+package:
+  kind: library
+  binary: false
+
+# The hardware is the Sonoff S60TPF (EU, type F); what is spoken is Tasmota's,
+# so the block says which firmware these topics and field lines describe.
+device:
+  kind: plug
+  manufacturer: Sonoff
+  model: S60TPF
+  summary: A Wi-Fi smart plug with a switch and a power meter, reflashed with Tasmota.
+  transports: [mqtt]
+  firmware: tasmota
+
+# What a widget may bind to. The switch is an output a button or a toggle
+# drives; the meter's figures are inputs a number, chart or table shows.
+signals:
+  - id: switch
+    label: Switch
+    direction: output
+    field: state
+    kinds: "toggle button"
+    summary: The plug's relay, on or off, as the plug reported it.
+  - id: power
+    label: Power
+    direction: input
+    unit: W
+    field: power_w
+    kinds: "numeric chart table"
+    summary: The load the plug is switching, in watts.
+  - id: voltage
+    label: Voltage
+    direction: input
+    unit: V
+    field: voltage_v
+    kinds: "numeric chart table"
+    summary: The mains voltage the plug reports.
+  - id: current
+    label: Current
+    direction: input
+    unit: A
+    field: current_a
+    kinds: "numeric chart table"
+    summary: The current the plug is switching.
+  - id: energy_today
+    label: Energy today
+    direction: input
+    unit: kWh
+    field: energy_today_kwh
+    kinds: "numeric chart table"
+    summary: The energy the plug has measured since midnight.
+  - id: energy_total
+    label: Energy total
+    direction: input
+    unit: kWh
+    field: energy_total_kwh
+    kinds: "numeric table"
+    summary: The energy the plug has measured in total.
+
+metadata:
+  tags: [device, plug, sonoff, tasmota, mqtt]
+  stability: experimental
+  visibility: public
+
+docs:
+  title: Sonoff S60TPF (Tasmota)
+  section: devices
+  order: "51"
+  index: docs/doc/index.md
+  sources:
+    - docs/doc/index.md
+
+# Over MQTT the plug publishes under its Tasmota Topic, the prefix (the plan's
+# address for the device), with FullTopic %topic%/%prefix%/. The switch comes on
+# stat/RESULT, stat/POWER and tele/STATE, the meter on tele/SENSOR; the topics
+# are merged into one reading, each message changing only the fields it carries.
+# Tasmota reports in W, V, A and kWh, so every scale is 1.
+telemetry:
+  interface: plug
+telemetry_mqtt:
+  status_topics:
+    - "{prefix}/stat/RESULT"
+    - "{prefix}/stat/POWER"
+    - "{prefix}/tele/STATE"
+    - "{prefix}/tele/SENSOR"
+  online_topic: "{prefix}/tele/LWT"
+  online_up: "Online"
+# name | field | unit | type | path | scale. `$` is the whole payload, the bare
+# word stat/POWER carries; `onoff` reads ON/OFF in any case. The two state lines
+# are alternatives: whichever a message carries applies.
+telemetry_mqtt_fields:
+  - "switch|state||onoff|POWER|1"
+  - "switch|state||onoff|$|1"
+  - "power|power_w|W|f32|ENERGY/Power|1"
+  - "voltage|voltage_v|V|f32|ENERGY/Voltage|1"
+  - "current|current_a|A|f32|ENERGY/Current|1"
+  - "energy_today|energy_today_kwh|kWh|f32|ENERGY/Today|1"
+  - "energy_total|energy_total_kwh|kWh|f32|ENERGY/Total|1"
+
+# What the plug can be told to do. {on} is true or false, which Tasmota's Power
+# command accepts as it is; {prefix} is the plug's Topic. Not retained.
+actions:
+  switch:
+    mqtt_topic: "{prefix}/cmnd/POWER"
+    mqtt_payload: "{on}"

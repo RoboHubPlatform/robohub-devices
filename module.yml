@@ -14,7 +14,7 @@ module:
   previous_ids:
     - robohub-devices
   type: collection
-  version: 0.5.2
+  version: 0.6.0
   license: "MIT"
   description: >
     Device integrations for the RoboHub Platform: inverters, meters and other
@@ -49,6 +49,7 @@ modules:
   - devices/actuator/relay
   - apps/smart-plug
   - devices/plug/shelly-plug-m-gen3
+  - devices/plug/sonoff-s60tpf
   - nodes/gateway-node
   - tests/smart-plug-node
 
@@ -57,6 +58,7 @@ modules:
 # folder; a consumer reads this list instead of scanning the tree.
 devices:
   - devices/plug/shelly-plug-m-gen3
+  - devices/plug/sonoff-s60tpf
   - devices/inverter/growatt-es
   - devices/inverter/hoymiles-hms
   - devices/actuator/relay
@@ -71,6 +73,8 @@ metadata:
     - http
     - mqtt
     - shelly
+    - sonoff
+    - tasmota
   stability: experimental
   visibility: public
 

@@ -24,6 +24,7 @@ Each device has a page of its own:
 | Inverter | Growatt SPF ES Plus, over Modbus RTU (RS485) | {ref}`robohub-device-growatt-es/index` |
 | Inverter | Hoymiles HM/HMS microinverters, through an OpenDTU | {ref}`robohub-device-hoymiles-hms/index` |
 | Plug | Shelly Plug M Gen3, over HTTP RPC or MQTT | {ref}`robohub-device-shelly-plug-m-gen3/index` |
+| Plug | Sonoff S60TPF reflashed with Tasmota, over MQTT | {ref}`robohub-device-sonoff-s60tpf/index` |
 | Actuator | A relay on a GPIO | {ref}`robohub-device-relay/index` |
 
 Sensors are not devices: a DS18B20, a thermistor, a photoresistor, an encoder or

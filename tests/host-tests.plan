@@ -19,6 +19,7 @@ mkdir -p "$GEN/robohub/devices/actuator" "$GEN/robohub/devices/plug"
 cp "$DEV/devices/actuator/relay/inc/relay.h"     "$GEN/robohub/devices/actuator/relay.h"
 cp "$DEV/protocols/mqtt/inc/mqtt.h"              "$GEN/robohub/protocols/mqtt.h"
 cp "$DEV/devices/plug/shelly-plug-m-gen3/inc/shelly_plug.h" "$GEN/robohub/devices/plug/shelly_plug.h"
+cp "$DEV/devices/plug/sonoff-s60tpf/inc/sonoff_s60tpf.h" "$GEN/robohub/devices/plug/sonoff_s60tpf.h"
 
 $CC -std=c11 -Wall -Wextra -I"$DEV/protocols/modbus/inc" $BASE \
     "$DEV/tests/test_modbus.c" "$DEV/protocols/modbus/src/modbus.c" -o "$OUT/test_modbus"
@@ -45,6 +46,15 @@ $CC -std=gnu11 -Wall -Wextra -I"$GEN" -I"$DEV/protocols/http/inc" \
     "$DEV/protocols/mqtt/src/mqtt.c" \
     "$ROBOHUB_LINUX_DIR/src/linux_net.c" "$ROBOHUB_COMMON_DIR/src/platform/net.c" \
     "$ROBOHUB_COMMON_DIR/src/error.c" -lpthread -lm -o "$OUT/test_shelly"
+# The Sonoff S60TPF (Tasmota) reads its own manifest, to hold the field lines
+# to what the driver reads, and its documentation page; tests/CMakeLists.txt also runs each of its tests by
+# name, so a requirement's evidence is the test that verifies it.
+$CC -std=c11 -Wall -Wextra -I"$GEN" -I"$DEV/protocols/json/inc" -I"$DEV/protocols/mqtt/inc" \
+    -I"$DEV/devices/plug/sonoff-s60tpf/inc" $BASE \
+    -DSONOFF_MANIFEST="\"$DEV/devices/plug/sonoff-s60tpf/module.yml\"" \
+    -DSONOFF_DOCS="\"$DEV/devices/plug/sonoff-s60tpf/docs/doc/index.md\"" \
+    "$DEV/tests/test_sonoff.c" "$DEV/devices/plug/sonoff-s60tpf/src/sonoff_s60tpf.c" \
+    "$DEV/protocols/json/src/json.c" "$DEV/protocols/mqtt/src/mqtt.c" -lm -o "$OUT/test_sonoff"
 $CC -std=c11 -Wall -Wextra -I"$DEV/nodes/gateway-node/src" $BASE \
     "$DEV/tests/test_key_file.c" "$DEV/nodes/gateway-node/src/key_file.c" -o "$OUT/test_key_file"
 
@@ -55,3 +65,4 @@ run test_hoymiles "$OUT/test_hoymiles"
 run test_relay "$OUT/test_relay"
 run test_key_file "$OUT/test_key_file"
 run test_shelly "$OUT/test_shelly"
+run test_sonoff "$OUT/test_sonoff"

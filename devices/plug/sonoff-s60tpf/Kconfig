@@ -1,0 +1,13 @@
+menu "RoboHub Sonoff S60TPF (Tasmota)"
+
+config RH_DEV_SONOFF_S60TPF
+    bool "Sonoff S60TPF reflashed with Tasmota"
+    select RH_JSON
+    select RH_MQTT
+    default n
+    help
+      A Sonoff S60TPF Wi-Fi plug reflashed with Tasmota (tasmota32c3), as a
+      switch and power meter over MQTT. Stock eWeLink firmware is not
+      supported.
+
+endmenu
