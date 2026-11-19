@@ -113,7 +113,7 @@ requirements:
     statement: "The collection shall carry devices/plug/sonoff-s60tpf, named for the hardware and listed under modules: and devices:, whose manifest declares a device block (kind plug, manufacturer Sonoff, model S60TPF, transports [mqtt], firmware tasmota), signals switch, power (W), voltage (V), current (A), energy_today (kWh) and energy_total (kWh), the MQTT status topics (status_topics: stat/RESULT, stat/POWER, tele/STATE and tele/SENSOR under {prefix}) with a field line per signal at scale 1 — the state typed as an ON/OFF word (onoff), read from the POWER member of the JSON topics and, on a second line with the path $, from the bare word stat/POWER carries — the online topic {prefix}/tele/LWT with online_up Online, and the switch action as mqtt_topic {prefix}/cmnd/POWER with payload {on}; its Kconfig option RH_DEV_SONOFF_S60TPF shall select RH_JSON and RH_MQTT."
     rationale: Mesh reads and switches the plug from these lines alone (ADR-0001); the Tasmota firmware, not the Sonoff hardware, decides the topics, so the manifest says which firmware it describes.
     satisfies: [DEVS-0009]
-    status: proposed
+    status: approved
     verification: inspection
     decided_by: [ADR-0002]
     owner: maintainer
@@ -137,7 +137,7 @@ requirements:
     statement: The S60TPF module's documentation shall state that the integration needs the plug reflashed with Tasmota (tasmota32c3) over its serial pads, that stock eWeLink firmware is not supported (eWeLink LAN mode being future work), and that the UK S60TPG is likely identical but untested; give the procedure (unplugged from mains throughout, a backup of the 4 MB flash first), the Tasmota template, and the commands that set the Topic, FullTopic %topic%/%prefix%/, the broker host and the device's own broker user from the keeper, a web admin password and a telemetry period of 10 to 60 s; describe the calibration of the meter against a reference load as a manual step; and say that no credential goes into the plan.
     rationale: The reflash is the person's work and the hazard is mains; a step left out is a plug that either does not join or answers anyone on the network.
     satisfies: [DEVS-0002, DEVS-0010]
-    status: proposed
+    status: approved
     verification: inspection
     decided_by: [ADR-0002]
     owner: maintainer
