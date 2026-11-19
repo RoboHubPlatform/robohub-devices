@@ -1,7 +1,7 @@
 ---
 id: ADR-0002
 title: Sonoff S60TPF is supported reflashed with Tasmota, over MQTT
-status: proposed
+status: accepted
 date: 2026-11-19
 requirements: [DEVS-0010, DEVS-PLUG-0005, DEVS-PLUG-0006, DEVS-PLUG-0007, DEVS-PLUG-0008, DEVS-PLUG-0009, DEVS-PLUG-0010, DEVS-PLUG-0011, SYS-0001, SYS-0025, SYS-0033, SYS-0051]
 supersedes: []

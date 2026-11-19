@@ -65,7 +65,7 @@ requirements:
     statement: The Sonoff S60TPF integration shall present a RoboHubPlug whose cached state is the switch from Tasmota's POWER value (ON or OFF, in any letter case), power in W from ENERGY.Power, voltage in V from ENERGY.Voltage, current in A from ENERGY.Current, energy today in kWh from ENERGY.Today and total energy in kWh from ENERGY.Total, taken without conversion because Tasmota reports them in those units; its power reading shall mark load power, energy today and energy total valid only once the plug has reported them.
     rationale: Tasmota already reports in the units the readings declare, unlike the Shelly's Wh; a figure not yet heard must be absent, not zero (DEVS-0001).
     satisfies: [DEVS-0001, DEVS-0002]
-    status: proposed
+    status: approved
     verification: test
     decided_by: [ADR-0002]
     owner: maintainer
@@ -77,7 +77,7 @@ requirements:
     statement: "Over MQTT the S60TPF integration shall subscribe to <prefix>/stat/RESULT, <prefix>/stat/POWER, <prefix>/tele/STATE, <prefix>/tele/SENSOR and <prefix>/tele/LWT — the topics Tasmota publishes with FullTopic %topic%/%prefix%/ — and fold each into the same cached state, changing only the fields a message carries; a RESULT that answers another command changes nothing. The prefix (the plug's Tasmota Topic) shall come from the device's configuration and shall be refused when empty, longer than 128 bytes, starting with /, or holding #, + or a space."
     rationale: Tasmota splits the switch (RESULT, STATE) from the meter (SENSOR); with %topic% first, everything the plug says is under the one prefix the keeper grants a device (readwrite <prefix>/#).
     satisfies: [DEVS-0001, DEVS-0002]
-    status: proposed
+    status: approved
     verification: test
     decided_by: [ADR-0002]
     owner: maintainer
@@ -89,7 +89,7 @@ requirements:
     statement: Switching the S60TPF shall publish true or false, not retained, to <prefix>/cmnd/POWER through the platform's MQTT client, and the cached switch state shall change only when the plug reports it on stat/RESULT, stat/POWER or tele/STATE, never from the request; a publish the client refuses shall be returned as its error with the state unchanged.
     rationale: A switch must show the state the device reported (SYS-0025, MESH-0022); Tasmota accepts true and false for Power, so the shared {on} template fills the payload as it is.
     satisfies: [DEVS-0002, DEVS-0005]
-    status: proposed
+    status: approved
     verification: test
     decided_by: [ADR-0002]
     owner: maintainer
@@ -101,7 +101,7 @@ requirements:
     statement: The S60TPF integration shall report the plug as unreachable (a state error, and no power reading) after the plug's last will says Offline or when nothing has been heard from it for three of its telemetry periods (the configured period, 300 s when none is given), until it is heard again; a message that is not the JSON or the ON/OFF word its topic carries shall change nothing and be reported as a protocol error; a broker that refuses the platform client's credentials shall reach the caller as that client's error, not as an off switch.
     rationale: A last value repeated after the plug lost power, or a refused login shown as off, is a number that is not a reading (SYS-0047).
     satisfies: [DEVS-0003]
-    status: proposed
+    status: approved
     verification: test
     decided_by: [ADR-0002]
     owner: maintainer
@@ -113,7 +113,7 @@ requirements:
     statement: "The collection shall carry devices/plug/sonoff-s60tpf, listed under modules: and devices:, whose manifest declares a device block (kind plug, manufacturer Sonoff, model S60TPF, transports [mqtt], firmware tasmota), signals switch, power (W), voltage (V), current (A), energy_today (kWh) and energy_total (kWh), the MQTT status topics with one field line per signal (scale 1) and the state typed as an ON/OFF word, the online topic {prefix}/tele/LWT, and the switch action as mqtt_topic {prefix}/cmnd/POWER with payload {on}; its Kconfig option RH_DEV_SONOFF_S60TPF shall select RH_JSON and RH_MQTT."
     rationale: Mesh reads and switches the plug from these lines alone (ADR-0001); the Tasmota firmware, not the Sonoff hardware, decides the topics, so the manifest says which firmware it describes.
     satisfies: [DEVS-0009]
-    status: proposed
+    status: approved
     verification: inspection
     decided_by: [ADR-0002]
     owner: maintainer
@@ -125,7 +125,7 @@ requirements:
     statement: The host tests shall feed the S60TPF integration, through a fake MQTT client, the RESULT, POWER, STATE, SENSOR and LWT payloads Tasmota documents, and check the cached state and power reading, the command topic and payload, the refused prefixes and the offline and malformed cases; and shall check that the manifest's field lines, applied to the same payloads, give the same values as the driver.
     rationale: ADR-0001 records that a driver and its manifest describe a device twice and drifted once; one set of documents read by both is what keeps them together.
     satisfies: [DEVS-0001, DEVS-0009]
-    status: proposed
+    status: approved
     verification: test
     decided_by: [ADR-0002]
     owner: maintainer
@@ -137,7 +137,7 @@ requirements:
     statement: The S60TPF module's documentation shall state that the integration needs the plug reflashed with Tasmota (tasmota32c3) over its serial pads and that stock eWeLink firmware is not supported; give the procedure (unplugged from mains throughout, a backup of the 4 MB flash first), the Tasmota template, and the commands that set the Topic, FullTopic %topic%/%prefix%/, the broker host and the device's own broker user from the keeper, a web admin password, the telemetry period and the meter's calibration against a reference load; and say that no credential goes into the plan.
     rationale: The reflash is the person's work and the hazard is mains; a step left out is a plug that either does not join or answers anyone on the network.
     satisfies: [DEVS-0002, DEVS-0010]
-    status: proposed
+    status: approved
     verification: inspection
     decided_by: [ADR-0002]
     owner: maintainer
