@@ -38,6 +38,10 @@ devices/
     plug/
         shelly-plug-m-gen3/  a Shelly Plug M Gen3 over HTTP RPC or MQTT
         sonoff-s60tpf/       a Sonoff S60TPF reflashed with Tasmota, over MQTT
+        sonoff-s60zbtpf/     a Sonoff S60ZBTPF over Zigbee, through Zigbee2MQTT (manifest only)
+    coordinator/
+        sonoff-zbdongle-e/   a Sonoff ZBDongle-E USB Zigbee coordinator (manifest only)
+        sonoff-zbdongle-p/   a Sonoff ZBDongle-P USB Zigbee coordinator (manifest only)
 apps/
     smart-plug/     a custom device: a temperature sensor and a relay composed
 nodes/
@@ -75,8 +79,9 @@ their own, and the document's `total` object is what is read.
 
 ### Smart plugs
 
-Both present `RoboHubPlug` (a switch and a power meter) and are described in
-their manifests for Mesh, which reads and switches them without the C driver.
+The Wi-Fi plugs present `RoboHubPlug` (a switch and a power meter) and are
+described in their manifests for Mesh, which reads and switches them without the
+C driver; the Zigbee plug is described in its manifest only.
 
 - **Shelly Plug M Gen3** — over HTTP JSON-RPC or MQTT, as the plug ships.
 - **Sonoff S60TPF** — only **reflashed with Tasmota** (`tasmota32c3`, over the
@@ -86,6 +91,27 @@ their manifests for Mesh, which reads and switches them without the C driver.
   will or three telemetry periods of silence; the module's page gives the
   reflash, the Tasmota commands (`TelePeriod` 10–60 s) and the calibration. The
   UK S60TPG is likely identical but untested.
+- **Sonoff S60ZBTPF** — the Zigbee model, on its **stock firmware** (no reflash,
+  no eWeLink account), through a coordinator Mesh runs Zigbee2MQTT for
+  (ADR-0003). A manifest and no C driver: its `zigbee` block (model S60ZBTPF,
+  vendor SONOFF) is what Mesh matches a joined device by. It is paired with a
+  ~5 s press of its button while Mesh has joining open; it reports its voltage
+  only when paired, and power and current read 0 while it is off.
+
+### Zigbee coordinators
+
+A coordinator is the USB radio Zigbee devices join (`kind: coordinator`, ADR-0003).
+Mesh places it under a board that declares `host` and `usb_host` and runs
+Zigbee2MQTT for it there; the manifest is data only — USB ids and
+`/dev/serial/by-id/` patterns, `needs`, and the Zigbee2MQTT adapter.
+
+- **Sonoff ZBDongle-E** (Zigbee 3.0 USB Dongle Plus V2, EFR32MG21) — the `ember`
+  adapter, EmberZNet 7.4.4 or later; USB `1a86:55d4` (or `10c4:ea60`).
+- **Sonoff ZBDongle-P** (Zigbee 3.0 USB Dongle Plus, CC2652P) — the `zstack`
+  adapter; USB `10c4:ea60`.
+
+Each page says how to tell the two apart, the firmware, the extension cable, and
+how to reach the dongle from WSL (usbipd) and from a UNO Q (a powered USB-C hub).
 
 ## Reading and control
 
@@ -155,7 +181,11 @@ and its failures, the JSON reader's nesting and its accuracy, the Growatt decode
 (with a test map, independent of the default), the Hoymiles read over a real
 loopback socket through the real HTTP client, the relay's wiring and read-back,
 and the two plugs over a fake broker client — for the Sonoff S60TPF, its
-manifest's field lines applied to the same Tasmota payloads as the driver.
+manifest's field lines applied to the same Tasmota payloads as the driver. The
+S60ZBTPF's field lines, online path and action are applied to Zigbee2MQTT's
+documented messages (`tests/test_sonoff_zigbee.c`), and every coordinator
+manifest is checked for its ids, by-id patterns, needs and adapter
+(`tests/check_coordinators.py`).
 
 ```sh
 ROBOHUB_COMMON_DIR=/path/to/robohub-common \
@@ -213,8 +243,12 @@ Over MQTT, `telemetry_mqtt` names where the lines are read from: one
 `status_topic`, or a list `status_topics` merged into one reading (each message
 changes only the fields whose path it carries, and the newest value of each
 wins), and the `online_topic` with `online_up`, the payload that means online
-(`true` when not given; compared letter for letter). `{prefix}` is the device's
-address in the plan:
+(`true` when not given; compared letter for letter). With `online_path`, the
+online payload is read as JSON and the value at that path is what is compared
+(Zigbee2MQTT's `{"state":"online"}`); a payload that is not JSON or lacks the
+path is offline. An action's `mqtt_payload` has `{on}` replaced by `true` or
+`false`, and `{ONOFF}` by `ON` or `OFF` (Zigbee2MQTT refuses a boolean).
+`{prefix}` is the device's address in the plan:
 
 ```yaml
 telemetry_mqtt:                       # the Sonoff S60TPF running Tasmota
@@ -232,7 +266,7 @@ telemetry_mqtt_fields:
 ```
 
 HTTP devices — the Shelly plug and the Hoymiles through an OpenDTU — and MQTT
-devices — the Shelly plug and the Sonoff S60TPF — are read by Mesh directly and stored under the device node's plan identity. An inverter or
+devices — the Shelly plug, the Sonoff S60TPF and, through Zigbee2MQTT, the S60ZBTPF — are read by Mesh directly and stored under the device node's plan identity. An inverter or
 a relay that is carried by a device node publishes its frame under the same
 identity: `AREA` is the project area and `NODE` is the device node's index in
 the plan, which the device page shows. The Growatt Modbus integration and the

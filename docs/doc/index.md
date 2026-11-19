@@ -25,7 +25,18 @@ Each device has a page of its own:
 | Inverter | Hoymiles HM/HMS microinverters, through an OpenDTU | {ref}`robohub-device-hoymiles-hms/index` |
 | Plug | Shelly Plug M Gen3, over HTTP RPC or MQTT | {ref}`robohub-device-shelly-plug-m-gen3/index` |
 | Plug | Sonoff S60TPF reflashed with Tasmota, over MQTT | {ref}`robohub-device-sonoff-s60tpf/index` |
+| Plug | Sonoff S60ZBTPF over Zigbee, through Zigbee2MQTT (manifest only) | {ref}`robohub-device-sonoff-s60zbtpf/index` |
+| Coordinator | Sonoff ZBDongle-E, a USB Zigbee coordinator (EFR32MG21, `ember`) | {ref}`robohub-device-sonoff-zbdongle-e/index` |
+| Coordinator | Sonoff ZBDongle-P, a USB Zigbee coordinator (CC2652P, `zstack`) | {ref}`robohub-device-sonoff-zbdongle-p/index` |
 | Actuator | A relay on a GPIO | {ref}`robohub-device-relay/index` |
+
+A **coordinator** is a device of its own kind: a USB radio a Zigbee device joins,
+which Mesh places under a board declaring `host` and `usb_host` and drives
+through Zigbee2MQTT (ADR-0003). Its manifest has no `signals:` and no field
+lines; it says how it appears on USB (`usb:`), what a board must have to host it
+(`needs:`) and which Zigbee2MQTT adapter drives it (`zigbee.adapter`). A Zigbee
+device, like the S60ZBTPF, is a manifest with a `zigbee:` block naming the model
+and vendor Zigbee2MQTT reports for it, and no C code.
 
 Sensors are not devices: a DS18B20, a thermistor, a photoresistor, an encoder or
 an ADC is a part a board reaches through the HAL, so it is a driver in

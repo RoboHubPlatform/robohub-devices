@@ -1,0 +1,55 @@
+# The Zigbee coordinators under devices/coordinator/: USB radios Mesh places
+# under a board that can host one and drives through Zigbee2MQTT (ADR-0003,
+# robohub:ADR-0017). They are declared as data; no C code runs them. Proposed
+# until the maintainer approves them.
+level: SUB
+prefix: DEVS-COORD
+title: Coordinators
+requirements:
+  - id: DEVS-COORD-0001
+    title: The ZBDongle-P is declared as a coordinator
+    statement: "The collection shall carry devices/coordinator/sonoff-zbdongle-p, listed under modules: and devices:, whose manifest declares a device block (kind coordinator, manufacturer SONOFF, model ZBDongle-P, protocol zigbee, chip CC2652P), usb ids 10c4:ea60 with the by-id patterns usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_*-if00-port0 and usb-Silicon_Labs_Sonoff_Zigbee_3.0_USB_Dongle_Plus_*-if00-port0, needs host: true and usb_host: true, and zigbee adapter zstack."
+    rationale: The Sonoff Zigbee 3.0 USB Dongle Plus with a TI CC2652P is driven by Zigbee2MQTT's zstack adapter; these are the ids and names Zigbee2MQTT's own adapter discovery recognises it by.
+    satisfies: [DEVS-0011]
+    decided_by: [ADR-0003]
+    status: approved
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-20
+    tags: [sonoff, zigbee, coordinator, manifest]
+
+  - id: DEVS-COORD-0002
+    title: The ZBDongle-E is declared as a coordinator
+    statement: "The collection shall carry devices/coordinator/sonoff-zbdongle-e, listed under modules: and devices:, whose manifest declares a device block (kind coordinator, manufacturer SONOFF, model ZBDongle-E, protocol zigbee, chip EFR32MG21), usb ids 1a86:55d4 and 10c4:ea60 with the by-id patterns usb-ITEAD_SONOFF_Zigbee_3.0_USB_Dongle_Plus_V2_*-if00 and usb-Itead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_V2_*-if00-port0, needs host: true and usb_host: true, zigbee adapter ember, and the minimum coordinator firmware EmberZNet 7.4.4."
+    rationale: The EFR32MG21 version of the dongle is driven by the ember adapter, which needs EZSP v13 (EmberZNet 7.4 or later); a dongle with older firmware fails to start in a way that must be explained, not guessed at.
+    satisfies: [DEVS-0011]
+    decided_by: [ADR-0003]
+    status: approved
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-20
+    tags: [sonoff, zigbee, coordinator, manifest]
+
+  - id: DEVS-COORD-0003
+    title: A coordinator's guide says how to tell it apart, prepare it and plug it in
+    statement: Each coordinator's documentation shall say how to tell the P and the E apart (the label, the USB ids), which firmware it needs and where to get it, that it is plugged in on a USB extension cable away from USB 3 ports and Wi-Fi antennas, how it is reached from WSL (usbipd bind, attach with auto-attach) and from a UNO Q (a powered USB-C hub; host mode when the board is powered from 5V/VIN), and that the user running it must be in the group that owns the serial device.
+    rationale: Most coordinator failures are a dongle not reaching the machine, a missing group or interference; the guide is where they are answered.
+    satisfies: [DEVS-0011]
+    decided_by: [ADR-0003]
+    status: approved
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-20
+    tags: [sonoff, zigbee, coordinator, docs]
+
+  - id: DEVS-COORD-0004
+    title: The coordinator manifests are checked
+    statement: The collection's tests shall check that every manifest of kind coordinator declares its protocol, at least one usb id of the form vvvv:pppp, at least one by-id pattern, its needs and a zigbee adapter Zigbee2MQTT names (zstack, ember, deconz, zigate, zboss), and that every manifest with a zigbee block names its model and vendor.
+    rationale: Mesh refuses or misplaces a coordinator from these lines; a typo in one must fail in this repository, not on a person's machine.
+    satisfies: [DEVS-0011]
+    decided_by: [ADR-0003]
+    status: approved
+    verification: test
+    owner: maintainer
+    changed: 2026-11-20
+    tags: [zigbee, coordinator, tests]

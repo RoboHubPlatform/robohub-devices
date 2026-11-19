@@ -1,0 +1,144 @@
+#
+# sonoff-s60zbtpf — the Sonoff S60ZBTPF Zigbee plug, as data for Mesh.
+#
+# A manifest and nothing else (ADR-0003): the plug joins a coordinator Mesh runs
+# Zigbee2MQTT for, and Zigbee2MQTT makes it an MQTT device under the
+# coordinator's base topic. Mesh reads and switches it from the lines below; no
+# C code runs it, so there is no build and no package.
+#
+# @project RoboHub Platform
+# @license MIT
+#
+
+module:
+  name: robohub-device-sonoff-s60zbtpf
+  id: robohub.device.sonoff-s60zbtpf
+  type: device
+  version: 0.1.0
+  description: >
+    Sonoff S60ZBTPF Zigbee plug as a switch and power meter, through a Zigbee
+    coordinator Mesh runs Zigbee2MQTT for. Stock firmware, no reflash and no
+    eWeLink account; declared as data, with no C driver.
+  maintainer: "Aurel Miron"
+  license: "MIT"
+  created: "2026-11-20"
+
+# The ecosystem the device belongs to, as the collection names it: not a C
+# dependency (nothing here is compiled), but what lets a tool find the module
+# contract a `device` is written to.
+depends:
+  - name: robohub-common
+    type: c
+    path: ${ROBOHUB_WORKSPACE}/robohub-common
+    git: https://github.com/RoboHubPlatform/robohub-common
+    branch: main
+
+# The hardware is the Sonoff S60ZBTPF (EU, type F) on its own firmware; what is
+# spoken is Zigbee2MQTT's, so `firmware: stock` says these topics need nothing
+# done to the plug.
+device:
+  kind: plug
+  manufacturer: SONOFF
+  model: S60ZBTPF
+  summary: A Zigbee smart plug with a switch and a power meter, on its stock firmware.
+  transports: [zigbee]
+  firmware: stock
+
+# The model and vendor Zigbee2MQTT reports for the plug in bridge/devices
+# (`definition.model`, `definition.vendor`): what Mesh matches a device that
+# joined to this manifest by.
+zigbee:
+  model: S60ZBTPF
+  vendor: SONOFF
+
+# What a widget may bind to: the same signals as the S60TPF's, so a Wi-Fi and a
+# Zigbee plug read the same.
+signals:
+  - id: switch
+    label: Switch
+    direction: output
+    field: state
+    kinds: "toggle button"
+    summary: The plug's relay, on or off, as the plug reported it.
+  - id: power
+    label: Power
+    direction: input
+    unit: W
+    field: power_w
+    kinds: "numeric chart table"
+    summary: The load the plug is switching, in watts; 0 while it is off.
+  - id: voltage
+    label: Voltage
+    direction: input
+    unit: V
+    field: voltage_v
+    kinds: "numeric chart table"
+    summary: The mains voltage, read when the plug was paired and not reported afterwards.
+  - id: current
+    label: Current
+    direction: input
+    unit: A
+    field: current_a
+    kinds: "numeric chart table"
+    summary: The current the plug is switching; 0 while it is off.
+  - id: energy_today
+    label: Energy today
+    direction: input
+    unit: kWh
+    field: energy_today_kwh
+    kinds: "numeric chart table"
+    summary: The energy the plug has measured since midnight.
+  - id: energy_total
+    label: Energy total
+    direction: input
+    unit: kWh
+    field: energy_total_kwh
+    kinds: "numeric table"
+    summary: The energy the plug has measured in total.
+
+metadata:
+  tags: [device, plug, sonoff, zigbee, zigbee2mqtt]
+  stability: experimental
+  visibility: public
+
+docs:
+  title: Sonoff S60ZBTPF (Zigbee)
+  section: devices
+  order: "52"
+  index: docs/doc/index.md
+  sources:
+    - docs/doc/index.md
+
+# Zigbee2MQTT publishes the plug's whole state as one JSON message on
+# <base>/<friendly_name>, which Mesh renames to the device's address, so the
+# prefix is zigbee/<mesh>/<coordinator>/<address> and the status topic is the
+# prefix itself. Availability is {"state":"online"} on {prefix}/availability, so
+# the online state is read from the member `state` (online_path, MESH-0034).
+# Zigbee2MQTT reports in W, V, A and kWh, so every scale is 1.
+telemetry:
+  interface: plug
+telemetry_mqtt:
+  status_topics:
+    - "{prefix}"
+  online_topic: "{prefix}/availability"
+  online_path: state
+  online_up: "online"
+# name | field | unit | type | path | scale. A member a message does not carry
+# leaves its field as it was: voltage is in the state only after pairing or a
+# re-read, and the plug forces power and current to 0 while it is off.
+# energy_total is Zigbee2MQTT's `energy`, the metering cluster's total.
+telemetry_mqtt_fields:
+  - "switch|state||onoff|state|1"
+  - "power|power_w|W|f32|power|1"
+  - "voltage|voltage_v|V|f32|voltage|1"
+  - "current|current_a|A|f32|current|1"
+  - "energy_today|energy_today_kwh|kWh|f32|energy_today|1"
+  - "energy_total|energy_total_kwh|kWh|f32|energy|1"
+
+# What the plug can be told to do. Zigbee2MQTT takes "ON" or "OFF" and refuses a
+# JSON boolean, so the payload carries {ONOFF} (MESH-0035), not {on}. Not
+# retained.
+actions:
+  switch:
+    mqtt_topic: "{prefix}/set"
+    mqtt_payload: '{"state":"{ONOFF}"}'

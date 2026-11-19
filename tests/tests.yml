@@ -5,7 +5,8 @@
 # half a configuration registers:
 #
 #   host  tests/run.sh: the protocols (Modbus, JSON, HTTP), the Growatt, Hoymiles,
-#         Shelly plug, Sonoff S60TPF and relay drivers, and the gateway node's key
+#         Shelly plug, Sonoff S60TPF and relay drivers, the Sonoff S60ZBTPF's
+#         manifest against Zigbee2MQTT's documents, and the gateway node's key
 #         file (tests/host-tests.plan), built against the sibling checkouts; then
 #         each Sonoff test again by name, a case of its own. The ctest kind
 #         configures, builds and runs it on every `rho test`.
@@ -38,6 +39,15 @@ suites:
     ctest:
       source: tests
       defines: [ROBOHUB_DEVICES_TESTS=host]
+
+  # Every coordinator manifest declares its protocol, USB ids, by-id patterns,
+  # needs and a Zigbee2MQTT adapter, and every Zigbee device its model and vendor
+  # (ADR-0003). A script, not a C test: it reads manifests, and needs only python3.
+  # @verifies DEVS-COORD-0004, DEVS-0011
+  - name: coordinators
+    kind: command
+    command: [python3, tests/check_coordinators.py]
+    tags: [unit, host]
 
   # The end-to-end scripts, one suite each, declared skipped with the reason:
   # see the header for why, and for how to run them. Run against gateway 0.6 on

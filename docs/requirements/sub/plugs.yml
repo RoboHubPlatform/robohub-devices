@@ -1,6 +1,7 @@
 # The smart plugs under devices/plug/: a Shelly Plug M Gen3 over HTTP JSON-RPC
-# or MQTT, and a Sonoff S60TPF reflashed with Tasmota, over MQTT (ADR-0002),
-# each presenting RoboHubPlug. Proposed until the maintainer approves them.
+# or MQTT, a Sonoff S60TPF reflashed with Tasmota, over MQTT (ADR-0002), each
+# presenting RoboHubPlug, and a Sonoff S60ZBTPF over Zigbee through
+# Zigbee2MQTT, declared for Mesh (ADR-0003). Proposed until the maintainer approves them.
 level: SUB
 prefix: DEVS-PLUG
 title: Plugs
@@ -143,3 +144,39 @@ requirements:
     owner: maintainer
     changed: 2026-11-19
     tags: [sonoff, tasmota, security, docs]
+
+  - id: DEVS-PLUG-0012
+    title: The S60ZBTPF's signals and actions are declared for Mesh
+    statement: "The collection shall carry devices/plug/sonoff-s60zbtpf, named for the hardware and listed under modules: and devices:, whose manifest declares a device block (kind plug, manufacturer SONOFF, model S60ZBTPF, transports [zigbee], firmware stock), a zigbee block (model S60ZBTPF, vendor SONOFF, as Zigbee2MQTT reports them), signals switch, power (W), voltage (V), current (A), energy_today (kWh) and energy_total (kWh), one MQTT status topic {prefix} with a field line per signal at scale 1 — the state typed onoff from state, power, voltage and current from the members of those names, energy_today from energy_today and energy_total from energy — the online topic {prefix}/availability with online_path state and online_up online, and the switch action as mqtt_topic {prefix}/set with payload {\"state\":\"{ONOFF}\"}."
+    rationale: Zigbee2MQTT makes the plug an MQTT device under the coordinator's base topic, with one JSON state message; Mesh reads and switches it from these lines alone (ADR-0001), and matches a device that joined to this manifest by its zigbee block.
+    satisfies: [DEVS-0009, DEVS-0011]
+    decided_by: [ADR-0003]
+    status: approved
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-20
+    tags: [sonoff, zigbee, manifest]
+
+  - id: DEVS-PLUG-0013
+    title: The S60ZBTPF's field lines are tested against Zigbee2MQTT's documents
+    statement: The host tests shall apply the S60ZBTPF manifest's field lines to the state, availability and set payloads Zigbee2MQTT documents for the plug — on and off, with power and current at 0 while off, a message without voltage, offline availability and a malformed payload — and check the values read, the fields left unchanged, the online state and the action's topic and payload for on and off.
+    rationale: Without a C driver the manifest is the whole integration; one set of documents is what holds it to what Zigbee2MQTT sends.
+    satisfies: [DEVS-0009]
+    decided_by: [ADR-0003]
+    status: approved
+    verification: test
+    owner: maintainer
+    changed: 2026-11-20
+    tags: [sonoff, zigbee, tests]
+
+  - id: DEVS-PLUG-0014
+    title: The S60ZBTPF's guide says how it is paired and what it reports
+    statement: The module's documentation shall say how to put the plug into pairing mode and pair it through Mesh's coordinator, which readings it pushes and how often (power and current at most every 10 s on change, the day's energy every 1 to 60 minutes, voltage read when it is paired and not reported afterwards), that power and current read 0 while it is off, and that it needs no reflash and no eWeLink account.
+    rationale: A reading that never changes (voltage) or drops to 0 when off is a property of the plug, not a fault; the person must find that before suspecting RoboHub.
+    satisfies: [DEVS-0009]
+    decided_by: [ADR-0003]
+    status: approved
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-20
+    tags: [sonoff, zigbee, docs]

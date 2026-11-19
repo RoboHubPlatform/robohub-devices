@@ -11,6 +11,7 @@
 #                   checkouts of robohub-common and robohub-linux.
 #   test_sonoff_*   the Sonoff S60TPF's tests, one case each, run by name from
 #                   the binary host-tests built.
+#   test_s60zb_*    the Sonoff S60ZBTPF's manifest tests, the same way.
 #   e2e-*           the end-to-end scripts, which run a real gateway and a real
 #                   node. They need GATEWAY_BIN (another repository's binary)
 #                   and this repository's node build, and exit 77 when either is
@@ -88,6 +89,19 @@ foreach(test
         test_sonoff_manifest_declares
         test_sonoff_docs_cover_preparation)
     add_test(NAME ${test} COMMAND "${ROBOHUB_DEVICES_HOST_OUT}/test_sonoff" ${test})
+    set_tests_properties(${test} PROPERTIES FIXTURES_REQUIRED robohub_devices_host_build)
+endforeach()
+
+# The Sonoff S60ZBTPF's tests, by name in the same way: its manifest against
+# Zigbee2MQTT's documents (ADR-0003).
+foreach(test
+        test_s60zb_manifest_declares
+        test_s60zb_state_on_and_off
+        test_s60zb_availability
+        test_s60zb_malformed
+        test_s60zb_switch_action
+        test_s60zb_docs_cover_pairing)
+    add_test(NAME ${test} COMMAND "${ROBOHUB_DEVICES_HOST_OUT}/test_sonoff_zigbee" ${test})
     set_tests_properties(${test} PROPERTIES FIXTURES_REQUIRED robohub_devices_host_build)
 endforeach()
 endif()

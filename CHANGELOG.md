@@ -2,6 +2,59 @@
 
 All notable changes to this module are recorded here, one section per release.
 
+## [0.7.0] - 2026-11-20
+
+Zigbee, as data (ADR-0003, DEVS-0011). A new device kind, **`coordinator`**: a
+USB radio Mesh places under a board declaring `host` and `usb_host` and drives
+through Zigbee2MQTT (robohub ADR-0017). Its manifest says how it appears on USB
+(`usb.ids`, `usb.by_id`), what a board must have to host it (`needs`) and which
+Zigbee2MQTT adapter drives it (`zigbee.adapter`), and nothing else; no C code
+runs it.
+
+- `devices/coordinator/sonoff-zbdongle-e` 0.1.0 — the Zigbee 3.0 USB Dongle Plus
+  V2 (EFR32MG21): USB `1a86:55d4` and `10c4:ea60`, the `ember` adapter,
+  EmberZNet 7.4.4 or later (DEVS-COORD-0002). The first coordinator to work end
+  to end.
+- `devices/coordinator/sonoff-zbdongle-p` 0.1.0 — the Zigbee 3.0 USB Dongle Plus
+  (CC2652P): USB `10c4:ea60`, the `zstack` adapter (DEVS-COORD-0001).
+- `devices/plug/sonoff-s60zbtpf` 0.1.0 — the S60ZBTPF Zigbee plug on its stock
+  firmware, a manifest only (DEVS-PLUG-0012): a `zigbee` block (model S60ZBTPF,
+  vendor SONOFF) Mesh matches a joined device by, the S60TPF's signals read
+  from one status topic `{prefix}`, `energy_total` from Zigbee2MQTT's `energy`,
+  the online state read from the member `state` of `{prefix}/availability`
+  (`online_path: state`, `online_up: online`), and the switch as
+  `{"state":"{ONOFF}"}` on `{prefix}/set`. Reading these needs Mesh's side of the
+  same contract (robohub-mesh MESH-0034, MESH-0035).
+
+All three are listed under `modules:` and `devices:` (the coordinators after the
+plugs). They are `type: device` with no `build` section and no `package`
+section: there is nothing to compile and nothing to link, and Mesh reads them as
+data. Until robohub-common's device contract allows a device without `build` and
+the kind `coordinator`, `rho module validate` refuses them (no CI step or test
+validates the collection's nested modules today).
+
+Each has a page: the E's tells the E and the P apart (label, USB ids, by-id
+names), says where to get EmberZNet 7.4.4+ (Sonoff's web flasher, the darkxst
+Silicon Labs builds) and how to reach the dongle — on a USB extension cable away
+from USB 3 and Wi-Fi, from WSL with usbipd (`bind`, `attach --wsl
+--auto-attach`), from a UNO Q through a powered USB-C hub (host mode is off when
+the board is powered from 5V/VIN until the JCTL header is set), with the user in
+`dialout` (DEVS-COORD-0003). The S60ZBTPF's says how to pair it (a ~5 s press
+until the LED blinks while Mesh's joining is open), what it pushes and how often,
+that voltage is read once at pairing and power and current read 0 while it is
+off, and that it needs no reflash and no eWeLink account (DEVS-PLUG-0014). The
+README's field-line grammar documents `online_path` and `{ONOFF}`.
+
+New tests: `tests/test_sonoff_zigbee.c` applies the S60ZBTPF's field lines,
+online path and action to Zigbee2MQTT's documented messages — on, off with power
+and current at 0, a message without voltage, online and offline availability,
+malformed payloads, and `{"state":"ON"}`/`{"state":"OFF"}` from `{ONOFF}` — each
+test also a CTest case of its own (DEVS-PLUG-0013). `tests/check_coordinators.py`
+(suite `coordinators`) checks every coordinator manifest for its protocol, USB
+ids of the form `vvvv:pppp`, by-id patterns, needs and a Zigbee2MQTT adapter, and
+every Zigbee device for its model and vendor, after checking itself against
+broken manifests (DEVS-COORD-0004).
+
 ## [0.6.0] - 2026-11-19
 
 A new device: the **Sonoff S60TPF**, reflashed with Tasmota, over MQTT

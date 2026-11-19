@@ -165,3 +165,22 @@ requirements:
     owner: maintainer
     changed: 2026-11-19
     tags: [devices, security, secrets]
+
+  - id: DEVS-0011
+    title: A coordinator says what it needs and how it is driven, as data
+    statement: >
+      Each coordinator the collection lists under `devices:` shall declare in its
+      manifest a `device` block of kind `coordinator` with its radio protocol, the
+      USB ids and `/dev/serial/by-id/` pattern it appears as (`usb:`), the
+      capabilities a board must have to host it (`needs:`, for a USB coordinator
+      `host: true` and `usb_host: true`), and the Zigbee2MQTT adapter that drives it
+      (`zigbee.adapter`); and each Zigbee device it lists shall name the model and
+      vendor Zigbee2MQTT reports for it (`zigbee.model`, `zigbee.vendor`).
+    rationale: Mesh places a coordinator, starts its program and matches a joined device to its manifest from these lines alone, as it reads and switches a device from its field lines (ADR-0001, ADR-0003).
+    satisfies: [SYS-0069, SYS-0051]
+    decided_by: [ADR-0003]
+    status: approved
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-20
+    tags: [zigbee, manifest, coordinator]

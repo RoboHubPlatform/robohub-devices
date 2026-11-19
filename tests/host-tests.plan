@@ -55,6 +55,13 @@ $CC -std=c11 -Wall -Wextra -I"$GEN" -I"$DEV/protocols/json/inc" -I"$DEV/protocol
     -DSONOFF_DOCS="\"$DEV/devices/plug/sonoff-s60tpf/docs/doc/index.md\"" \
     "$DEV/tests/test_sonoff.c" "$DEV/devices/plug/sonoff-s60tpf/src/sonoff_s60tpf.c" \
     "$DEV/protocols/json/src/json.c" "$DEV/protocols/mqtt/src/mqtt.c" -lm -o "$OUT/test_sonoff"
+# The Sonoff S60ZBTPF (Zigbee) has no driver: its manifest's field lines, online
+# path and action are applied to Zigbee2MQTT's documents, and its page is read;
+# tests/CMakeLists.txt runs each of its tests by name too.
+$CC -std=c11 -Wall -Wextra -I"$GEN" -I"$DEV/protocols/json/inc" $BASE \
+    -DS60ZB_MANIFEST="\"$DEV/devices/plug/sonoff-s60zbtpf/module.yml\"" \
+    -DS60ZB_DOCS="\"$DEV/devices/plug/sonoff-s60zbtpf/docs/doc/index.md\"" \
+    "$DEV/tests/test_sonoff_zigbee.c" "$DEV/protocols/json/src/json.c" -lm -o "$OUT/test_sonoff_zigbee"
 $CC -std=c11 -Wall -Wextra -I"$DEV/nodes/gateway-node/src" $BASE \
     "$DEV/tests/test_key_file.c" "$DEV/nodes/gateway-node/src/key_file.c" -o "$OUT/test_key_file"
 
@@ -66,3 +73,4 @@ run test_relay "$OUT/test_relay"
 run test_key_file "$OUT/test_key_file"
 run test_shelly "$OUT/test_shelly"
 run test_sonoff "$OUT/test_sonoff"
+run test_sonoff_zigbee "$OUT/test_sonoff_zigbee"

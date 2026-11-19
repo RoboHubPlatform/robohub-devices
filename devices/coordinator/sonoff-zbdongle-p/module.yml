@@ -1,0 +1,79 @@
+#
+# sonoff-zbdongle-p — the Sonoff Zigbee 3.0 USB Dongle Plus, as data for Mesh.
+#
+# A coordinator (ADR-0003): a USB radio Mesh places under a board that can host
+# it and drives through Zigbee2MQTT on that board (robohub ADR-0017). The
+# manifest says what Mesh needs to place it and start Zigbee2MQTT for it, and
+# nothing else; no C code runs it, so there is no build and no package.
+#
+# @project RoboHub Platform
+# @license MIT
+#
+
+module:
+  name: robohub-device-sonoff-zbdongle-p
+  id: robohub.device.sonoff-zbdongle-p
+  type: device
+  version: 0.1.0
+  description: >
+    Sonoff Zigbee 3.0 USB Dongle Plus (ZBDongle-P, TI CC2652P), a Zigbee
+    coordinator Mesh drives through Zigbee2MQTT's zstack adapter. Declared as
+    data, with no C driver.
+  maintainer: "Aurel Miron"
+  license: "MIT"
+  created: "2026-11-20"
+
+# The ecosystem the device belongs to, as the collection names it: not a C
+# dependency (nothing here is compiled), but what lets a tool find the module
+# contract a `device` is written to.
+depends:
+  - name: robohub-common
+    type: c
+    path: ${ROBOHUB_WORKSPACE}/robohub-common
+    git: https://github.com/RoboHubPlatform/robohub-common
+    branch: main
+
+# A coordinator is reached through the program that drives it, not over a
+# transport of its own, so `transports` is empty and `protocol` says what radio
+# network it makes.
+device:
+  kind: coordinator
+  manufacturer: SONOFF
+  model: ZBDongle-P
+  summary: Sonoff Zigbee 3.0 USB Dongle Plus (CC2652P), a Zigbee coordinator driven by Zigbee2MQTT.
+  protocol: zigbee
+  chip: CC2652P
+  transports: []
+
+# How it appears on a host: a Silicon Labs CP210x bridge. Older units name
+# themselves Silicon_Labs rather than ITead. 10c4:ea60 is also the id of some
+# ZBDongle-E units, which is why the adapter is declared below and never
+# inferred from the id. Behind usbipd or a VM the by-id name may differ.
+usb:
+  ids: ["10c4:ea60"]
+  by_id:
+    - "usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_*-if00-port0"
+    - "usb-Silicon_Labs_Sonoff_Zigbee_3.0_USB_Dongle_Plus_*-if00-port0"
+
+# What a board must declare to host it: a host to run Zigbee2MQTT on, and a USB
+# host port to plug it into.
+needs:
+  host: true
+  usb_host: true
+
+# The CC2652P runs TI's Z-Stack; Zigbee2MQTT drives it with the zstack adapter.
+zigbee:
+  adapter: zstack
+
+metadata:
+  tags: [device, coordinator, sonoff, zigbee, zigbee2mqtt, usb]
+  stability: experimental
+  visibility: public
+
+docs:
+  title: Sonoff ZBDongle-P (Zigbee coordinator)
+  section: devices
+  order: "61"
+  index: docs/doc/index.md
+  sources:
+    - docs/doc/index.md
