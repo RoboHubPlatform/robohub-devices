@@ -146,3 +146,15 @@ requirements:
     owner: maintainer
     changed: 2026-11-19
     tags: [devices, manifest, telemetry]
+
+  - id: DEVS-0010
+    title: A device's own credentials are never in a manifest or a project file
+    statement: "A device integration shall take no password, API key, device key or broker credential from its manifest, the plan or a project file: a device reached through the platform's MQTT client shall carry none of its own, and one that needs a credential of its own shall read it from a file readable only by the account that owns it, never from an environment value or a command line, and shall name in its documentation where that file is."
+    rationale: A project file is shared, copied and committed; a plug's key in it is a key anyone with the project holds. The broker credentials already belong to the platform's client and the keeper (SYS-0028).
+    satisfies: [SYS-0033, SYS-0028]
+    status: proposed
+    verification: inspection
+    decided_by: [ADR-0002]
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [devices, security, secrets]
