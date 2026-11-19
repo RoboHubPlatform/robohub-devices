@@ -133,11 +133,18 @@ requirements:
   - id: DEVS-0009
     title: A device says how it is read and switched, as data
     statement: >
-      Each device integration the collection lists under `devices:` shall declare
-      in its manifest a `device` block, its telemetry interface (inverter, plug or
-      switch) and, for a device read over HTTP or MQTT, one line per signal of
-      the form `signal|field|unit|type|json/path|scale` and the actions it can be
-      told to do per transport.
+      Each device integration the collection lists under `devices:` shall declare in
+      its manifest a `device` block, its telemetry interface (inverter, plug or
+      switch) and, for a device read over HTTP or MQTT, at least one line per signal
+      of the form `signal|field|unit|type|json/path|scale` and the actions it can be
+      told to do per transport. Over MQTT it shall name the status topic it is read
+      from (`status_topic`), or several merged into one reading (`status_topics`,
+      each message changing only the fields it carries), and may name an online
+      topic with the payload that means online (`online_up`, `true` when not given);
+      a field type is `f32`, `bool` or `onoff` (an ON/OFF word in any letter case,
+      `true`/`false` or `1`/`0`), the path `$` is the whole payload of a topic whose
+      payload is a bare value, and two lines may name one field by different paths,
+      whichever a message carries applying.
     rationale: Mesh polls an HTTP plug directly and an application switches it without knowing which integration is behind a model; both read this, not the C.
     satisfies: [SYS-0025, SYS-0028, SYS-0051]
     decided_by: [ADR-0001]
