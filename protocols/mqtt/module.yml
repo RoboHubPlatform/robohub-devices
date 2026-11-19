@@ -58,6 +58,6 @@ docs:
   title: MQTT
   section: devices
   order: "60"
-  index: docs/index.md
+  index: docs/doc/index.md
   sources:
-    - docs/index.md
+    - docs/doc/index.md

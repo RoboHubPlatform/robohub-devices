@@ -55,6 +55,7 @@ static RoboHubGPIO make_gpio(FakeGpio* fake)
     return gpio;
 }
 
+// @verifies DEVS-ACT-0001, DEVS-ACT-0002
 int main(void)
 {
     int ok = 1;

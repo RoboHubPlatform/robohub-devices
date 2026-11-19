@@ -64,6 +64,7 @@ static rh_size bus_read_timed(RoboHubRS485* s, rh_u8* d, rh_size n, rh_u32 t)
     return copy;
 }
 
+// @verifies DEVS-0001, DEVS-INV-0001, DEVS-INV-0002
 int main(void)
 {
     Fake fake;

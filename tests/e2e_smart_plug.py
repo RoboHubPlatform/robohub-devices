@@ -35,6 +35,10 @@ DEV = os.path.dirname(HERE)
 NODE_BIN = os.environ.get(
     "NODE_BIN", os.path.join(DEV, "tests", "smart-plug-node", "build", "output", "smart_plug_node"))
 GATEWAY_BIN = os.environ.get("GATEWAY_BIN")
+# What the test exits with when this machine cannot run it — no gateway binary,
+# or no node build — rather than a failure: the automake convention, which ctest
+# reports as a skip with the reason printed above it.
+CANNOT_RUN_HERE = 77
 HOST = "127.0.0.1"
 AREA = 7
 NODE = 20
@@ -70,14 +74,15 @@ def wait_ready(port, timeout=10.0):
     return False
 
 
+# @verifies DEVS-0004, DEVS-0005, DEVS-APP-0001, DEVS-APP-0002, DEVS-NODE-0001, DEVS-NODE-0002
 def main():
     if not GATEWAY_BIN or not os.path.exists(GATEWAY_BIN):
-        print("set GATEWAY_BIN to the robohub-gateway binary", file=sys.stderr)
-        return 2
+        print("skipped: set GATEWAY_BIN to the robohub-gateway binary", file=sys.stderr)
+        return CANNOT_RUN_HERE
     if not os.path.exists(NODE_BIN):
-        print(f"node binary not found at {NODE_BIN}; build it with "
+        print(f"skipped: node binary not found at {NODE_BIN}; build it with "
               f"`rho build -target native .` in tests/smart-plug-node", file=sys.stderr)
-        return 2
+        return CANNOT_RUN_HERE
 
     # Two pty pairs, bridged: one end for each program, so they have a cable.
     m_gw, s_gw = pty.openpty()

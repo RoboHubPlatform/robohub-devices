@@ -26,6 +26,7 @@ void robohub_smart_plug_init(RoboHubSmartPlug* plug,
     plug->node = node;
 }
 
+// @req DEVS-APP-0002
 RoboHubError robohub_smart_plug_command(RoboHubDeviceId id,
                                         rh_u16 opcode,
                                         rh_u32 argument,
@@ -53,6 +54,7 @@ RoboHubError robohub_smart_plug_command(RoboHubDeviceId id,
     return ROBOHUB_OK;
 }
 
+// @req DEVS-APP-0001
 RoboHubError robohub_smart_plug_poll(void* user)
 {
     RoboHubSmartPlug* plug = (RoboHubSmartPlug*)user;

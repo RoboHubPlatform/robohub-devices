@@ -18,7 +18,7 @@ module:
   previous_ids:
     - robohub-devices.nodes.gateway-node
   type: module
-  version: 0.1.1
+  version: 0.1.2
   description: >
     A device node: reads an inverter through robohub-devices and publishes the
     reading to a RoboHub gateway as a PowerReading frame.
@@ -33,6 +33,8 @@ build:
   standard: c11
   sources:
     - src/main.c
+    # The device key file: who may read it, and what it holds.
+    - src/key_file.c
     # The schema's payloads, generated from schemas/link.rho. The same schema
     # generates the gateway's Rho, so both ends write one PowerReading layout.
     - src/protocol/protocol.c

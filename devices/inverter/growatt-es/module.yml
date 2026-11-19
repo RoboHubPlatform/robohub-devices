@@ -119,4 +119,4 @@ docs:
   title: Growatt inverter
   section: devices
   order: "40"
-  index: docs/index.md
+  index: docs/doc/index.md

@@ -34,7 +34,16 @@ typedef enum {
 typedef struct {
     const char* host;       /* HTTP host, or unused for MQTT */
     rh_u16      port;       /* HTTP port, or unused for MQTT */
-    const char* device_id;  /* Shelly device id, the MQTT topic name */
+    /** The plug's Shelly device id (`shellyplugmg3-<mac>`), which is also the
+     *  topic prefix a plug publishes under until it is given another. */
+    const char* device_id;
+    /** The MQTT topic prefix the plug is configured with (Shelly's
+     *  `MQTT.SetConfig` `topic_prefix`); NULL means the device id. */
+    const char* topic_prefix;
+    /** The `src` of the JSON-RPC requests sent to the plug, the name its
+     *  answers come back to (`<source>/rpc`); NULL means "robohub". It may not
+     *  hold `"`, `\` or a control character. */
+    const char* source;
     RoboHubShellyTransport transport;
     RoboHubMqtt* mqtt;      /* required for the MQTT transport */
     RoboHubDeviceId id;
@@ -60,7 +69,15 @@ RoboHubError robohub_shelly_poll(RoboHubShelly* plug);
 /** The last power reading, as a `RoboHubPowerReading`. */
 RoboHubError robohub_shelly_power(RoboHubShelly* plug, RoboHubPowerReading* out);
 
-/** Feed an MQTT status payload (the `.../status/switch:0` document). */
+/**
+ * Feed a status payload the platform received for this plug.
+ *
+ * Every shape the plug sends is read: the switch status object published on
+ * `<prefix>/status/switch:0`, a `NotifyStatus` notification published on
+ * `<prefix>/events/rpc` (only the fields it carries change), and the
+ * `Shelly.GetStatus` document. A notification for another component, or an
+ * event, changes nothing.
+ */
 RoboHubError robohub_shelly_ingest_status(RoboHubShelly* plug, const char* payload);
 
 #ifdef __cplusplus

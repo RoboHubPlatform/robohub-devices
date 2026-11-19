@@ -76,6 +76,7 @@ static rh_i32 content_length(const char* text, const char* body_at)
     return -1;
 }
 
+// @req DEVS-PROTO-0004
 RoboHubError robohub_http_get(const char* host,
                               rh_u16 port,
                               const char* path,

@@ -1,0 +1,33 @@
+# The actuators under devices/actuator/: a relay, or any on/off output, over a
+# GPIO, presenting RoboHubSwitch. Proposed until the maintainer approves them.
+level: SUB
+prefix: DEVS-ACT
+title: Actuators
+requirements:
+  - id: DEVS-ACT-0001
+    title: A relay starts off and is driven in terms of on
+    statement: >
+      The relay integration shall bring its pin up as an output driven to the
+      off level, and shall drive the pin high for on when wired active-high and
+      low for on when wired active-low.
+    rationale: A load must not switch on because a board booted, and a caller thinks in on and off, never in levels.
+    satisfies: [DEVS-0001]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [relay, gpio, outputs]
+
+  - id: DEVS-ACT-0002
+    title: A relay reports the level its pin is at
+    statement: >
+      Reading a relay's state shall read the pin's level back and report it as on
+      or off through the wiring, including when the pin was changed by something
+      other than the relay.
+    rationale: The state a command reports and a page shows must be the relay's, not the last one it was told.
+    satisfies: [DEVS-0005]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [relay, gpio, outputs]

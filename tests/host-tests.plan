@@ -15,8 +15,10 @@ cp "$DEV/protocols/http/inc/http_client.h"       "$GEN/robohub/protocols/http_cl
 cp "$DEV/protocols/json/inc/json.h"              "$GEN/robohub/protocols/json.h"
 cp "$DEV/devices/inverter/growatt-es/inc/growatt.h"  "$GEN/robohub/devices/inverter/growatt.h"
 cp "$DEV/devices/inverter/hoymiles-hms/inc/hoymiles.h" "$GEN/robohub/devices/inverter/hoymiles.h"
-mkdir -p "$GEN/robohub/devices/actuator"
+mkdir -p "$GEN/robohub/devices/actuator" "$GEN/robohub/devices/plug"
 cp "$DEV/devices/actuator/relay/inc/relay.h"     "$GEN/robohub/devices/actuator/relay.h"
+cp "$DEV/protocols/mqtt/inc/mqtt.h"              "$GEN/robohub/protocols/mqtt.h"
+cp "$DEV/devices/plug/shelly-plug-m-gen3/inc/shelly_plug.h" "$GEN/robohub/devices/plug/shelly_plug.h"
 
 $CC -std=c11 -Wall -Wextra -I"$DEV/protocols/modbus/inc" $BASE \
     "$DEV/tests/test_modbus.c" "$DEV/protocols/modbus/src/modbus.c" -o "$OUT/test_modbus"
@@ -35,9 +37,21 @@ $CC -std=gnu11 -Wall -Wextra -I"$GEN" -I"$DEV/protocols/http/inc" \
     "$ROBOHUB_COMMON_DIR/src/error.c" -lpthread -o "$OUT/test_hoymiles"
 $CC -std=c11 -Wall -Wextra -I"$GEN" -I"$DEV/devices/actuator/relay/inc" $BASE \
     "$DEV/tests/test_relay.c" "$DEV/devices/actuator/relay/src/relay.c" -o "$OUT/test_relay"
+$CC -std=gnu11 -Wall -Wextra -I"$GEN" -I"$DEV/protocols/http/inc" \
+    -I"$DEV/protocols/json/inc" -I"$DEV/protocols/mqtt/inc" \
+    -I"$DEV/devices/plug/shelly-plug-m-gen3/inc" $BASE \
+    "$DEV/tests/test_shelly.c" "$DEV/devices/plug/shelly-plug-m-gen3/src/shelly_plug.c" \
+    "$DEV/protocols/http/src/http_client.c" "$DEV/protocols/json/src/json.c" \
+    "$DEV/protocols/mqtt/src/mqtt.c" \
+    "$ROBOHUB_LINUX_DIR/src/linux_net.c" "$ROBOHUB_COMMON_DIR/src/platform/net.c" \
+    "$ROBOHUB_COMMON_DIR/src/error.c" -lpthread -lm -o "$OUT/test_shelly"
+$CC -std=c11 -Wall -Wextra -I"$DEV/nodes/gateway-node/src" $BASE \
+    "$DEV/tests/test_key_file.c" "$DEV/nodes/gateway-node/src/key_file.c" -o "$OUT/test_key_file"
 
 run test_modbus "$OUT/test_modbus"
 run test_json "$OUT/test_json"
 run test_growatt "$OUT/test_growatt"
 run test_hoymiles "$OUT/test_hoymiles"
 run test_relay "$OUT/test_relay"
+run test_key_file "$OUT/test_key_file"
+run test_shelly "$OUT/test_shelly"

@@ -15,6 +15,7 @@
 #include <string.h>
 #include "robohub/protocols/json.h"
 
+// @verifies DEVS-PROTO-0003
 int main(void)
 {
     const char* doc =

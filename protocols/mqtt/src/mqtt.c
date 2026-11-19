@@ -5,6 +5,7 @@
 
 #include <stddef.h>
 
+// @req DEVS-PROTO-0005
 RoboHubError robohub_mqtt_publish(RoboHubMqtt* mqtt, const char* topic,
                                   const char* payload, rh_bool retain)
 {

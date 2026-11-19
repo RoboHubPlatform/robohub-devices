@@ -14,12 +14,18 @@ module:
   previous_ids:
     - robohub-devices
   type: collection
-  version: 0.5.1
+  version: 0.5.2
   license: "MIT"
   description: >
     Device integrations for the RoboHub Platform: inverters, meters and other
     equipment spoken to over a protocol of its own, read into the common device
     interfaces and published to a gateway.
+
+# The collection's requirements are numbered DEVS-NNNN (and DEVS-<SUB>-NNNN per
+# family: protocols, inverters, actuators, plugs, the smart-plug application and
+# the device node) and serve the system requirements robohub holds. They are
+# kept here, at the root, for every module the collection carries.
+requirements: { prefix: DEVS, parent: robohub }
 
 # The interfaces every module in the collection is written against. A
 # collection is not built, but it belongs to the ecosystem that declares those
@@ -72,6 +78,6 @@ docs:
   title: RoboHub Devices
   section: collections
   order: "10"
-  index: docs/index.md
+  index: docs/doc/index.md
   sources:
-    - docs/index.md
+    - docs/doc/index.md

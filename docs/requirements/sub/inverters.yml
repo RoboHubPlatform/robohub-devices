@@ -1,0 +1,57 @@
+# The inverter integrations under devices/inverter/: a Growatt SPF/ES over Modbus
+# and a Hoymiles HMS through an OpenDTU, both presenting RoboHubInverter.
+# Proposed until the maintainer approves them.
+level: SUB
+prefix: DEVS-INV
+title: Inverters
+requirements:
+  - id: DEVS-INV-0001
+    title: A Growatt is read through a register map
+    statement: >
+      The Growatt integration shall read one contiguous block of input registers
+      named by its register map, refuse at bind a map whose block is larger than
+      125 registers, decode each figure from its register, width (one register,
+      or two as high then low), sign and scale, add the second PV string's power
+      and energy to the first's, and mark absent every figure of width 0 or
+      outside the block.
+    rationale: Moving a register is a change to the map, not to the code, and a one-string model or a figure a model lacks must not be read from elsewhere.
+    satisfies: [DEVS-0001, DEVS-0003]
+    decided_by: [ADR-0001]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [growatt, modbus]
+
+  - id: DEVS-INV-0002
+    title: The default map is the SPF 3000-6000 ES Plus
+    statement: >
+      The Growatt default map shall read input registers 0-101 as Growatt's
+      off-grid RS485 protocol V0.26 places them, with powers as 32-bit counts of
+      0.1 W, grid power positive on import, and battery power turned to the
+      reading's sign, positive while charging.
+    rationale: It is the inverter this installation has; the reading counts charge as positive where Growatt counts discharge.
+    satisfies: [DEVS-0001]
+    decided_by: [ADR-0001]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [growatt]
+
+  - id: DEVS-INV-0003
+    title: A Hoymiles is read through its OpenDTU, in the reading's units
+    statement: >
+      The Hoymiles integration shall GET the OpenDTU's live status
+      (`/api/livedata/status` unless another path is given), read the inverter's
+      total power, day's yield and lifetime yield, convert each from the unit the
+      document gives (Wh for the day and kWh for the total when it gives none) to
+      W and kWh, mark the battery, grid and load figures absent, and return an
+      error when none of the three figures is found.
+    rationale: OpenDTU counts the day's yield in Wh; taking it as kWh once reported a thousand times too much.
+    satisfies: [DEVS-0001, DEVS-0002, DEVS-0003]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [hoymiles, http]

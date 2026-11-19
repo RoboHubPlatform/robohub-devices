@@ -106,4 +106,4 @@ docs:
   title: Hoymiles through OpenDTU
   section: devices
   order: "45"
-  index: docs/index.md
+  index: docs/doc/index.md

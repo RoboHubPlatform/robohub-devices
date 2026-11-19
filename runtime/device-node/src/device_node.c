@@ -46,6 +46,7 @@ static RoboHubError node_poll_task(robohub_core_task_id id, void* user)
 /* Read what has arrived on the link and offer it to the framing. This is how a
  * command reaches the node: the parser publishes a whole frame on the event bus,
  * and the dispatch below finds it. */
+// @req DEVS-NODE-0001
 static RoboHubError node_link_task(robohub_core_task_id id, void* user)
 {
     (void)id;
@@ -101,6 +102,7 @@ static const robohub_core_app node_app = {
 /* Route one control request to the device it names and answer it. The runtime
  * answers the sampling rate itself, so a device gets a pace control without
  * writing one; everything else goes to the device's own handler. */
+// @req DEVS-0005, DEVS-NODE-0002
 static RoboHubError node_on_control(robohub_event_id id, const void* payload, rh_size size, void* user)
 {
     (void)id;
@@ -165,6 +167,7 @@ static RoboHubError node_on_control(robohub_event_id id, const void* payload, rh
 /*  Public API                                                                */
 /* -------------------------------------------------------------------------- */
 
+// @req DEVS-0006, DEVS-NODE-0003
 RoboHubError robohub_device_node_init(RoboHubDeviceNode* node,
                                       const RoboHubDeviceNodeConfig* config)
 {
@@ -212,6 +215,7 @@ RoboHubError robohub_device_node_init(RoboHubDeviceNode* node,
     return robohub_core_app_register(&node_app);
 }
 
+// @req DEVS-NODE-0001
 RoboHubError robohub_device_node_add_device(RoboHubDeviceNode* node,
                                             RoboHubDeviceId id,
                                             RoboHubDeviceCommandFn command,
@@ -268,6 +272,7 @@ RoboHubError robohub_device_node_run(RoboHubDeviceNode* node)
 /*  Publishing                                                                */
 /* -------------------------------------------------------------------------- */
 
+// @req DEVS-0004, DEVS-NODE-0001
 RoboHubError robohub_device_node_publish_temperature(RoboHubDeviceNode* node,
                                                      RoboHubDeviceId id,
                                                      rh_f32 celsius,
@@ -289,6 +294,7 @@ RoboHubError robohub_device_node_publish_temperature(RoboHubDeviceNode* node,
     return robohub_core_event_publish(MESSAGE_ID_TELEMETRY, payload, (rh_size)TELEMETRY_WIRE_SIZE);
 }
 
+// @req DEVS-0004, DEVS-NODE-0001
 RoboHubError robohub_device_node_publish_power(RoboHubDeviceNode* node,
                                                const RoboHubPowerReading* reading)
 {
@@ -319,6 +325,7 @@ RoboHubError robohub_device_node_publish_power(RoboHubDeviceNode* node,
     return robohub_core_event_publish(MESSAGE_ID_POWER_READING, payload, (rh_size)POWER_READING_WIRE_SIZE);
 }
 
+// @req DEVS-0004, DEVS-NODE-0001
 RoboHubError robohub_device_node_publish_state(RoboHubDeviceNode* node,
                                                RoboHubDeviceId id,
                                                RoboHubDeviceKind kind,

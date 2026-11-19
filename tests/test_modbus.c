@@ -58,6 +58,7 @@ static rh_size make_read_reply(rh_u8 slave, rh_u8 fc, const rh_u16* regs, rh_u16
     return len + 2u;
 }
 
+// @verifies DEVS-0003, DEVS-PROTO-0001, DEVS-PROTO-0002
 int main(void)
 {
     Fake fake;

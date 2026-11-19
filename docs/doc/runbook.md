@@ -68,6 +68,27 @@ A command answers with what the device reached (`{"success":true,"opcode":2,
 "actual":1}`), routed to the device whether it is wired to the gateway or behind
 a relay.
 
+### A sealed node's key file
+
+A node run on a host seals its link with `RH_SECURE_UID` (16 hex digits) and the
+key in the file `RH_SECURE_KEY_FILE` names — `<epoch>:<32 hex digits>`, or the
+hex alone for epoch 0. The file must belong to the user the node runs as and
+grant nothing to its group or to others; the node checks the file it opened and
+refuses to start otherwise, saying what to do:
+
+```text
+robohub-device-node: the key file /etc/robohub/node.key can be read or written by other users (mode 0644); make it owner-only: chmod 600 /etc/robohub/node.key
+```
+
+```sh
+chown robohub /etc/robohub/node.key     # the node's user
+chmod 600 /etc/robohub/node.key
+```
+
+A file that is missing, not a regular file, or not a key stops the node the same
+way; a node meant to be sealed is never heard plain. A key the gateway rotates is
+written back with mode 0600.
+
 A device node usually publishes over the gateway's **serial** link (the L2 path).
 For the inverter node that link is the node's own UART (`RH_NODE_UART`), wired to
 the gateway host. Where the node runs on the same host as the gateway, its TCP
@@ -210,5 +231,6 @@ GATEWAY_BIN=<...>/robohub-gateway/build/robohub-gateway python3 tests/e2e_smart_
 | Modbus read accepted but values wrong | the register map and scales (see above) |
 | Node prints `the device could not be opened` | a named peripheral is not registered: `RH_RS485_UART` / `RHO_UART1` for the UART, `RH_RS485_DE_GPIO` for the pin |
 | Node reads (Hoymiles) but no figures | the OpenDTU document's keys, or the wrong path |
+| Node prints `the key file ... can be read or written by other users` | `chmod 600` the key file; `belongs to uid N`: `chown` it to the node's user |
 | Gateway does not list the device | the node's link: `RH_NODE_LINK`/`RH_GATEWAY_*`, and that the gateway's port is the one the node dials |
 | A device listed but power is 0 | the `valid` mask — the figure may be absent, not zero |

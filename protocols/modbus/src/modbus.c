@@ -53,6 +53,7 @@ RoboHubError robohub_modbus_init(RoboHubModbus* self,
 /* Send a request and return the reply, checking the unit id and the CRC. `frame`
  * receives the answer and `got` its length. The function code is checked by the
  * caller, because a write and a read answer with different shapes. */
+// @req DEVS-PROTO-0002, DEVS-0003
 static RoboHubError modbus_transact(RoboHubModbus* self,
                                     rh_u8* request,
                                     rh_size request_len,
@@ -86,6 +87,7 @@ static RoboHubError modbus_transact(RoboHubModbus* self,
     return ROBOHUB_OK;
 }
 
+// @req DEVS-PROTO-0001, DEVS-PROTO-0002
 static RoboHubError modbus_read(RoboHubModbus* self,
                                 rh_u8 function,
                                 rh_u16 addr,
@@ -163,6 +165,7 @@ RoboHubError robohub_modbus_read_holding(RoboHubModbus* self,
     return modbus_read(self, ROBOHUB_MODBUS_FC_READ_HOLDING, addr, count, out);
 }
 
+// @req DEVS-PROTO-0001
 RoboHubError robohub_modbus_write_register(RoboHubModbus* self,
                                            rh_u16 addr,
                                            rh_u16 value)

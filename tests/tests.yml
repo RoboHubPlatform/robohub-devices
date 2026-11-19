@@ -1,0 +1,65 @@
+# robohub-devices' tests, declared, so that `rho test .` — and so CI — runs them.
+#
+# The tests are registered with CTest in tests/CMakeLists.txt, a test project of
+# its own (the collection is not built by CMake); ROBOHUB_DEVICES_TESTS picks which
+# half a configuration registers:
+#
+#   host  tests/run.sh: the protocols (Modbus, JSON, HTTP), the Growatt, Hoymiles,
+#         Shelly plug and relay drivers, and the gateway node's key file
+#         (tests/host-tests.plan), built against the sibling checkouts. The ctest
+#         kind configures, builds and runs it on every `rho test`.
+#   e2e   tests/e2e_*.py: the node and a real gateway together. They need another
+#         repository's binary (GATEWAY_BIN) and this repository's node builds;
+#         a script that cannot run here exits 77, which CTest records as skipped
+#         with the reason the script printed.
+#
+# The e2e scripts are declared skipped, with the reason, rather than as a ctest suite:
+# rho-test 0.3 reads a suite's cases from `[PASS]`/`[FAIL]` lines only, so the
+# `[SKIP]` lines the ctest plugin prints for the scripts are dropped, and a suite
+# whose every case was skipped is failed for reporting no cases. Declared skipped,
+# every run says that they were not run and why, and never counts them as a pass.
+# To run them:
+#
+#     rho build -target native nodes/gateway-node
+#     rho build -target native tests/smart-plug-node
+#     cmake -S tests -B build/tests/e2e -DROBOHUB_DEVICES_TESTS=e2e
+#     GATEWAY_BIN=/path/to/robohub-gateway ctest --test-dir build/tests/e2e --output-on-failure
+#
+# Once rho-test reads `[SKIP]` lines, the three become one `kind: ctest` suite
+# with `defines: [ROBOHUB_DEVICES_TESTS=e2e]`, run, or skipped per script, by
+# `rho test` itself.
+name: robohub-devices
+suites:
+  # @verifies DEVS-NODE-0007
+  - name: host
+    kind: ctest
+    tags: [unit, host]
+    ctest:
+      source: tests
+      defines: [ROBOHUB_DEVICES_TESTS=host]
+
+  # The end-to-end scripts, one suite each, declared skipped with the reason:
+  # see the header for why, and for how to run them. Run against gateway 0.6 on
+  # (2026-11-19), e2e_power passes; e2e_growatt and e2e_smart_plug still send
+  # plain frames on the uplink and no API ticket, and fail until they are sealed
+  # as e2e_power is.
+  - name: e2e-power
+    kind: command
+    command: python3 tests/e2e_power.py
+    tags: [e2e, host]
+    status: skip
+    reason: needs a robohub-gateway binary (GATEWAY_BIN) and the node build; run with ctest as tests/tests.yml says
+
+  - name: e2e-growatt
+    kind: command
+    command: python3 tests/e2e_growatt.py
+    tags: [e2e, host]
+    status: skip
+    reason: needs a robohub-gateway binary (GATEWAY_BIN) and the node build; run with ctest as tests/tests.yml says
+
+  - name: e2e-smart-plug
+    kind: command
+    command: python3 tests/e2e_smart_plug.py
+    tags: [e2e, host]
+    status: skip
+    reason: needs a robohub-gateway binary (GATEWAY_BIN) and the smart-plug node build; run with ctest as tests/tests.yml says

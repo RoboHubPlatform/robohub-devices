@@ -1,0 +1,117 @@
+# The device node: the runtime under runtime/device-node that carries the link,
+# the publishing and the command dispatch for an application, and the host
+# program under nodes/gateway-node that reads an inverter and publishes it.
+# Proposed until the maintainer approves them.
+level: SUB
+prefix: DEVS-NODE
+title: Device node
+requirements:
+  - id: DEVS-NODE-0001
+    title: The runtime frames readings for the application
+    statement: >
+      The device-node runtime shall present up to 8 devices per node, publish a
+      temperature, power or state reading handed to it as the matching
+      robohub-protocol message through robohub-transport, and read its link every
+      5 ms so that a command reaches the node.
+    rationale: An application supplies what it reads and what a command does, and never touches the wire.
+    satisfies: [DEVS-0004]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [device-node, runtime]
+
+  - id: DEVS-NODE-0002
+    title: Commands are dispatched by the device they name
+    statement: >
+      The runtime shall route a control request to the handler of the device its
+      area and node name and answer with result 0 and the value reached when the
+      handler succeeds, 1 when it fails, and 2 when no device or handler takes the
+      opcode; it shall answer SET_SAMPLING_RATE itself by setting the poll
+      period, never below 100 ms, and reporting the period set.
+    rationale: One node may present several devices, each commanded apart; a device's own opcodes start at 256 so they cannot collide with the ecosystem's.
+    satisfies: [DEVS-0005]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [device-node, commands]
+
+  - id: DEVS-NODE-0003
+    title: A sealed node configuration must be complete
+    statement: >
+      The runtime shall refuse a configuration that names a board id without a
+      key or a key without an id, and a sealed configuration with no link read,
+      since the gateway's session answer arrives on the link.
+    rationale: A sealed node that cannot read the session answer would never send a frame the gateway accepts.
+    satisfies: [DEVS-0006]
+    status: proposed
+    verification: analysis
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [device-node, security]
+
+  - id: DEVS-NODE-0004
+    title: The gateway node reads an inverter on a timer and publishes it
+    statement: >
+      The gateway node shall read the inverter RH_DEVICE names (growatt, the
+      default, or hoymiles) every INTERVAL_MS (5000 by default), publish each
+      reading as a PowerReading under AREA and NODE (1 and 10 by default) over the
+      UART or TCP link RH_NODE_LINK names, and read the link between readings so
+      that the gateway's session answer and commands are taken in.
+    rationale: An inverter appears in the gateway's listing and REST API as a board does, configured from the environment of the machine it runs on.
+    satisfies: [DEVS-0004]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [gateway-node, telemetry]
+
+  - id: DEVS-NODE-0005
+    title: The gateway node takes its key from the build or a key file
+    statement: >
+      The gateway node shall seal its link with the board id and key of the
+      robohub_secret.h built into it, or on a host with RH_SECURE_UID (16 hex
+      digits) and the key in RH_SECURE_KEY_FILE (`<epoch>:<32 hex digits>`, or
+      the hex alone for epoch 0), run plain when neither is named, and exit with
+      an error when either is named but is not a board id and key.
+    rationale: A node that was meant to be sealed must never be heard plain.
+    satisfies: [DEVS-0006, DEVS-0008]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [gateway-node, security]
+
+  - id: DEVS-NODE-0006
+    title: A rotated key replaces the key file atomically
+    statement: >
+      When the gateway rotates its key, a host gateway node whose key came from a
+      file shall write `<epoch>:<hex>` to a temporary file beside it created with
+      mode 0600, flush it to disk and rename it over the key file, so the file
+      holds the old key or the new one and never part of either.
+    rationale: A power cut during the rewrite must not leave the node with no key it can open a session with.
+    satisfies: [DEVS-0007]
+    status: proposed
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [gateway-node, security, key-rotation]
+
+  - id: DEVS-NODE-0007
+    title: The gateway node refuses a key file other users can reach
+    statement: >
+      Before reading the key file RH_SECURE_KEY_FILE names, a host gateway
+      node shall check the opened file and refuse to start, with one line
+      naming the file and the fix (chmod 600 <file>, or chown to the node's
+      user), when it is not a regular file, is owned by another user than the
+      one the node runs as, or grants its group or others any permission; and
+      shall refuse a file that is missing or does not hold <epoch>:<32 hex
+      digits> or the hex alone.
+    rationale: A device key another user can read is a key that user holds, and one another user can write is a key that user chooses; the node is the last place that can notice.
+    satisfies: [DEVS-0006, DEVS-0008]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [gateway-node, security, secrets]

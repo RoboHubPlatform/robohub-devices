@@ -4,7 +4,7 @@ module:
   previous_ids:
     - robohub-devices.devices.plug.shelly-plug-m-gen3
   type: device
-  version: 0.2.0
+  version: 0.2.1
   description: >
     Shelly Plug M Gen3 as a switch and power meter, reached over HTTP JSON-RPC
     or MQTT. Both transports produce the same cached state and power reading.
@@ -112,9 +112,9 @@ docs:
   title: Shelly Plug M Gen3
   section: devices
   order: "50"
-  index: docs/index.md
+  index: docs/doc/index.md
   sources:
-    - docs/index.md
+    - docs/doc/index.md
 
 telemetry:
   interface: plug

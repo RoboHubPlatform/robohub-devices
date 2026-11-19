@@ -63,6 +63,7 @@ static int near(float a, float b)
     return d < 0.0005f;
 }
 
+// @verifies DEVS-0001, DEVS-INV-0003, DEVS-PROTO-0004
 int main(void)
 {
     g_listen_fd = socket(AF_INET, SOCK_STREAM, 0);

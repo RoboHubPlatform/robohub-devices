@@ -162,7 +162,7 @@ The smart-plug test runs `tests/smart-plug-node`, the real composition and drive
 over fakes for the two parts a host does not have; it is built with
 `rho build -target native .`.
 
-For bringing the real hardware up, see [docs/runbook.md](docs/runbook.md).
+For bringing the real hardware up, see [docs/doc/runbook.md](docs/doc/runbook.md).
 
 ## Telemetry descriptors
 

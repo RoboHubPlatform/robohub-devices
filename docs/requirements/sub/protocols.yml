@@ -1,0 +1,84 @@
+# The protocol clients under protocols/: Modbus RTU, HTTP GET, the JSON field
+# reader and the MQTT seam. They carry bytes and fields and know nothing about
+# what a register or a figure means. Proposed until the maintainer approves them.
+level: SUB
+prefix: DEVS-PROTO
+title: Protocol clients
+requirements:
+  - id: DEVS-PROTO-0001
+    title: Modbus RTU requests are framed as the protocol defines
+    statement: >
+      The Modbus master shall send a read of input (04) or holding (03)
+      registers, or a write of one register (06), as unit id, function code,
+      big-endian address and count or value, closed with the CRC-16/Modbus low
+      byte first, and shall refuse a read of 0 or more than 125 registers with
+      an invalid-argument error before sending anything.
+    rationale: 125 is the protocol's own limit for one read; a request the slave cannot answer must not go on the bus.
+    satisfies: [DEVS-0002]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [modbus]
+
+  - id: DEVS-PROTO-0002
+    title: A Modbus reply is checked before a register is used
+    statement: >
+      The Modbus master shall wait for a reply for the configured window (500 ms
+      when none is given), report silence as a timeout, and report as a protocol
+      error a reply from another unit id, an exception reply, a reply for another
+      function, a byte count other than twice the registers asked for, a short
+      reply or a CRC that does not match.
+    rationale: A reply whose length nobody guarantees must be checked against the frame the function promises, so a short answer is an error and not a wrong number.
+    satisfies: [DEVS-0003]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [modbus, errors]
+
+  - id: DEVS-PROTO-0003
+    title: A JSON field is read by its path
+    statement: >
+      The JSON reader shall return the number, boolean or string at a
+      slash-separated key path, taking at each step the first key in a member
+      position and skipping string values whole, and shall report a missing key,
+      a missing step of the path, or a value of another type as not found.
+    rationale: OpenDTU and Shelly documents hold the same key at several depths and in string values; the total, not the first channel or a word in a note, is what is meant.
+    satisfies: [DEVS-0001, DEVS-0003]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [json]
+
+  - id: DEVS-PROTO-0004
+    title: An HTTP document is fetched with one bounded GET
+    statement: >
+      The HTTP client shall send one GET asking the server to close the
+      connection, end the body at the Content-Length when the reply has one,
+      bound every receive by the given timeout (3000 ms when none is given) and
+      the whole reply by the caller's buffer, and report a host that does not
+      resolve or answer as not found, silence as a timeout and a reply with no
+      header terminator as a protocol error.
+    rationale: The caller shares a core with the scheduler; a server that keeps the socket open, or sends more than the buffer, must not stall or overrun it.
+    satisfies: [DEVS-0002, DEVS-0003]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [http]
+
+  - id: DEVS-PROTO-0005
+    title: MQTT goes through the platform's client
+    statement: >
+      A device integration shall publish to MQTT only through the publish
+      function the platform supplies in RoboHubMqtt, and a publish with no client,
+      no topic or no payload shall be refused with an invalid-argument error.
+    rationale: A board's MQTT client belongs to its network stack and its broker credentials; the device only formats the topic and the payload.
+    satisfies: [DEVS-0002]
+    status: proposed
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [mqtt]

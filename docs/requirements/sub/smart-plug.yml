@@ -1,0 +1,36 @@
+# The smart-plug application under apps/smart-plug: a temperature sensor and a
+# switch composed into one device on the device-node runtime, built for a board
+# or, as tests/smart-plug-node, for the host over fakes. Proposed until the
+# maintainer approves them.
+level: SUB
+prefix: DEVS-APP
+title: Smart-plug application
+requirements:
+  - id: DEVS-APP-0001
+    title: The smart plug reports its temperature and its switch
+    statement: >
+      On every poll (2000 ms on a board) the smart plug shall publish its
+      temperature, as 0 with a fault status when the sensor does not answer, and
+      the state its switch reads back, both under its one area and node.
+    rationale: One device, two readings; a sensor fault must be visible as a fault rather than as a temperature.
+    satisfies: [DEVS-0004]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [smart-plug, telemetry]
+
+  - id: DEVS-APP-0002
+    title: The smart plug answers a switch command with the state reached
+    statement: >
+      The smart plug shall answer SET_SWITCH by setting its output to on for a
+      non-zero argument and off for zero, and acknowledge with the state its
+      output reads back afterwards; any other opcode shall be refused as not
+      supported.
+    rationale: The acknowledgement carries the state the relay is in, not the one it was told.
+    satisfies: [DEVS-0005]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [smart-plug, commands, outputs]

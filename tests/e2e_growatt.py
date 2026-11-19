@@ -31,6 +31,10 @@ DEV = os.path.dirname(HERE)
 NODE_BIN = os.environ.get(
     "NODE_BIN", os.path.join(DEV, "nodes", "gateway-node", "build", "output", "gateway_node"))
 GATEWAY_BIN = os.environ.get("GATEWAY_BIN")
+# What the test exits with when this machine cannot run it — no gateway binary,
+# or no node build — rather than a failure: the automake convention, which ctest
+# reports as a skip with the reason printed above it.
+CANNOT_RUN_HERE = 77
 HOST = "127.0.0.1"
 AREA = 7
 NODE = 31
@@ -111,11 +115,11 @@ def wait_ready(port, timeout=10.0):
 
 def main():
     if not GATEWAY_BIN or not os.path.exists(GATEWAY_BIN):
-        print("set GATEWAY_BIN to the robohub-gateway binary", file=sys.stderr)
-        return 2
+        print("skipped: set GATEWAY_BIN to the robohub-gateway binary", file=sys.stderr)
+        return CANNOT_RUN_HERE
     if not os.path.exists(NODE_BIN):
-        print(f"node binary not found at {NODE_BIN}", file=sys.stderr)
-        return 2
+        print(f"skipped: node binary not found at {NODE_BIN}", file=sys.stderr)
+        return CANNOT_RUN_HERE
 
     master_fd, slave_fd = pty.openpty()
     tty.setraw(master_fd)

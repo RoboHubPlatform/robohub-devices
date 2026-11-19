@@ -22,6 +22,7 @@ static rh_u32 level_for(const RoboHubRelay* relay, rh_bool on)
     return on ? 0u : 1u;
 }
 
+// @req DEVS-ACT-0001
 static RoboHubError relay_op_init(RoboHubSwitch* self)
 {
     RoboHubRelay* relay = (RoboHubRelay*)self->context;
@@ -50,6 +51,7 @@ static RoboHubError relay_op_deinit(RoboHubSwitch* self)
     return ROBOHUB_OK;
 }
 
+// @req DEVS-ACT-0002
 static RoboHubError relay_op_get(RoboHubSwitch* self, rh_bool* on)
 {
     RoboHubRelay* relay = (RoboHubRelay*)self->context;
@@ -68,6 +70,7 @@ static RoboHubError relay_op_get(RoboHubSwitch* self, rh_bool* on)
     return ROBOHUB_OK;
 }
 
+// @req DEVS-ACT-0001
 static RoboHubError relay_op_set(RoboHubSwitch* self, rh_bool on)
 {
     RoboHubRelay* relay = (RoboHubRelay*)self->context;

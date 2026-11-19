@@ -1,0 +1,60 @@
+# The smart plugs under devices/plug/: a Shelly Plug M Gen3 over HTTP JSON-RPC
+# or MQTT, presenting RoboHubPlug. Proposed until the maintainer approves them.
+level: SUB
+prefix: DEVS-PLUG
+title: Plugs
+requirements:
+  - id: DEVS-PLUG-0001
+    title: A Shelly plug's status is read into one cached state
+    statement: >
+      The Shelly integration shall read the plug's status document over HTTP
+      (`/rpc/Shelly.GetStatus`) into a cached switch state, power in W, voltage
+      in V, current in A and total energy in kWh, converting the energy the plug
+      reports in Wh.
+    rationale: The plug counts energy in Wh and the reading in kWh; both transports must leave the same state behind.
+    satisfies: [DEVS-0001, DEVS-0002]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [shelly, http]
+
+  - id: DEVS-PLUG-0002
+    title: A Shelly plug is switched over the transport it is reached by
+    statement: >
+      Switching a Shelly plug shall send `Switch.Set` for switch 0 — over HTTP as
+      `/rpc/Switch.Set?id=0&on=<true|false>`, over MQTT as a JSON-RPC request
+      published to the plug's `rpc` topic through the platform's client.
+    rationale: An application switches a plug as a RoboHubPlug, whichever way it reaches it.
+    satisfies: [DEVS-0002, DEVS-0005]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [shelly, http, mqtt, outputs]
+
+  - id: DEVS-PLUG-0003
+    title: A Shelly plug's signals and actions are declared for Mesh
+    statement: >
+      The Shelly Plug M Gen3 manifest shall declare its switch, power, voltage,
+      current and total-energy signals for both HTTP and MQTT, with a scale of
+      0.001 on the total energy, and its switch action as an HTTP path and as an
+      MQTT topic and payload.
+    rationale: Mesh reads a plug and an application switches it from these lines, without the C driver.
+    satisfies: [DEVS-0009]
+    status: proposed
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [shelly, manifest]
+
+  - id: DEVS-PLUG-0004
+    title: A Shelly plug's MQTT status is read from the topics it publishes under
+    statement: "Over MQTT the Shelly integration shall read the switch status object published on <prefix>/status/switch:0 and the NotifyStatus notifications published on <prefix>/events/rpc into the same cached state as HTTP, changing only the fields a notification carries and nothing for another component; the topic prefix (default: the device id) and the JSON-RPC source (default robohub) shall come from the device's configuration, and a source that would break the request's JSON shall be refused."
+    rationale: A real plug publishes the switch object alone and notifications under params, not the Shelly.GetStatus document; a plug given its own topic prefix must still be reached.
+    satisfies: [DEVS-0001, DEVS-0002]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [shelly, mqtt]

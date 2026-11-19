@@ -40,6 +40,7 @@ static void hoymiles_path(char* path, rh_size cap, rh_bool grouped, const char* 
  * OpenDTU counts the day's yield in Wh and the lifetime yield in kWh, and a
  * figure whose unit is the thousand-times one is scaled to the reading's. With
  * no unit, the one OpenDTU documents for the figure is taken. */
+// @req DEVS-INV-0003
 static rh_bool hoymiles_figure(const char* body, const char* key, const char* unit,
                                const char* default_unit, rh_f64* out)
 {
@@ -94,6 +95,7 @@ static RoboHubError hoymiles_op_deinit(RoboHubInverter* self)
     return ROBOHUB_OK;
 }
 
+// @req DEVS-0001, DEVS-INV-0003
 static RoboHubError hoymiles_op_read(RoboHubInverter* self, RoboHubPowerReading* out)
 {
     RoboHubHoymiles* dev = (RoboHubHoymiles*)self->context;

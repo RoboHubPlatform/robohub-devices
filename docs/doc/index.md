@@ -72,6 +72,28 @@ rho build .
 ## Testing
 
 ```sh
+rho test .
+```
+
+`tests/tests.yml` declares the suites, over the CTest project in
+`tests/CMakeLists.txt`. `host` runs `tests/run.sh` — the protocols, the
+drivers and the gateway node's key file — against the sibling checkouts of
+robohub, robohub-common and robohub-linux, found under `ROBOHUB_WORKSPACE` (or
+beside this repository). The `e2e-*` suites are the end-to-end scripts with a real
+gateway; they need another repository's binary, so `rho test` reports them
+skipped with that reason, and they are run with CTest directly:
+
+```sh
+rho build -target native nodes/gateway-node
+cmake -S tests -B build/tests/e2e -DROBOHUB_DEVICES_TESTS=e2e
+GATEWAY_BIN=/path/to/robohub-gateway ctest --test-dir build/tests/e2e --output-on-failure
+```
+
+A script that cannot run there — no `GATEWAY_BIN`, no node build — exits 77 and
+CTest reports it skipped with the reason it printed. The host tests alone, as
+before:
+
+```sh
 ROBOHUB_COMMON_DIR=/path/to/robohub-common \
 ROBOHUB_LINUX_DIR=/path/to/robohub-linux \
 ROBOHUB_ORCHESTRATOR_DIR=/path/to/robohub \

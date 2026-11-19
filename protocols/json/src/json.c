@@ -33,6 +33,7 @@ static const char* skip_ws(const char* p)
  * a string whose nearest non-space predecessor is `{` or `,` — the member
  * position — which is what keeps a key name inside a string value from being
  * taken for a key. */
+// @req DEVS-PROTO-0003
 static const char* json_find_key(const char* p, const char* key)
 {
     if (p == NULL || key == NULL) {
@@ -164,6 +165,7 @@ static rh_bool json_parse_string(const char* p, char* out, rh_size cap)
 /* Walk a slash-separated key path and return the pointer to the value of the
  * last key. Each step reuses the single-key search, so the grammar is understood
  * once. */
+// @req DEVS-PROTO-0003
 static const char* json_find_path(const char* json, const char* path)
 {
     if (path == NULL || path[0] == '\0') {

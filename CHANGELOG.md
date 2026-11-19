@@ -2,6 +2,50 @@
 
 All notable changes to this module are recorded here, one section per release.
 
+## [0.5.2] - 2026-11-19
+
+Security: the gateway node refuses a key file other users can reach. It read the
+device key from RH_SECURE_KEY_FILE whatever the file's owner and mode, so a key
+file left group- or world-readable gave every user of the machine the board's key
+(and with it the board's sessions with its gateway), and one writable by others
+let them choose it. The node now checks the file it opened and refuses to start,
+with one line naming the file and the fix (`chmod 600 <file>`, or `chown` to the
+node's user), when it is not a regular file, belongs to another user, or grants
+its group or others any permission; a missing file or one that is not
+`<epoch>:<32 hex digits>` stops it as before, now saying which (DEVS-NODE-0007;
+gateway-node 0.1.2, the reading moved to `src/key_file.c`). `tests/test_key_file.c`
+covers a good file, a missing one, each too-open mode, another user's file, a
+directory, and keys of the wrong length or content. No other reader of a key file
+is in this collection.
+
+CI runs this collection's tests: `tests/tests.yml` declares the host tests
+(`tests/run.sh`, through a CTest project in `tests/CMakeLists.txt`) as a ctest
+suite, so `rho test .` runs them. The end-to-end scripts are suites of their own,
+declared skipped with the reason, because they need another repository's gateway
+binary; each script now exits 77 (skipped) rather than 2 when GATEWAY_BIN or the
+node build is missing, which CTest reports as skipped with the script's reason. Of the
+three, only e2e_power passes against gateway 0.6 on: e2e_growatt and
+e2e_smart_plug still send plain frames on the uplink and no API ticket.
+
+The Shelly Plug M Gen3 over MQTT reads the status a real plug sends
+(shelly-plug-m-gen3 0.2.1, DEVS-PLUG-0004). It looked up `switch:0/output`,
+`switch:0/apower` and so on in every payload, which is the shape of
+`Shelly.GetStatus` over HTTP; the plug publishes the switch object alone on
+`<prefix>/status/switch:0`, so no MQTT status was ever parsed and the plug read
+as off with no power, whatever it was doing. The integration now reads the
+switch object wherever it is — alone on `status/switch:0`, under `params/switch:0`
+in a `NotifyStatus` on `<prefix>/events/rpc` (only the fields it carries change),
+or under `switch:0` in `Shelly.GetStatus` — bounded to that object, and ignores a
+notification for another component or an event. `poll` subscribes to both topics.
+The topics were also fixed to `shellyplugmgen3-<device_id>/...` and the request's
+`src` to `robohub`: the config now carries `topic_prefix` (default: the device id,
+which is the prefix a Shelly uses until it is given another — so `device_id` is now
+the whole id, `shellyplugmg3-<mac>`, not the part after the dash) and `source`
+(default `robohub`; a source holding `"`, `\` or a control character is refused,
+since it is written into the request's JSON). `tests/test_shelly.c` covers the
+three payload shapes, partial and foreign notifications, and the topics and source
+from the config.
+
 ## [0.4.3] - 2026-11-14
 
 The device nodes' links can be sealed (robohub-transport's secure.h), as the

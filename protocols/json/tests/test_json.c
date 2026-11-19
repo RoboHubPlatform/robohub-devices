@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <string.h>
 
+// @verifies DEVS-PROTO-0003
 int main(void)
 {
     const char* doc = "{\"switch:0\":{\"output\":true,\"apower\":12.5,\"aenergy\":{\"total\":1234.5}}}";

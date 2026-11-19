@@ -38,8 +38,9 @@
  *   makes, or for a node run on a host:
  *   RH_SECURE_UID      the board's id, 16 hex digits
  *   RH_SECURE_KEY_FILE a file holding the device key: `<epoch>:<32 hex digits>`,
- *                      or the 32 hex digits alone, which is epoch 0. It should
- *                      be readable by the node's user alone.
+ *                      or the 32 hex digits alone, which is epoch 0. It must
+ *                      be the node's user's and readable by that user alone
+ *                      (chmod 600); the node refuses to start otherwise.
  *   With either, every frame is sealed and the gateway's session answer is read
  *   from the link; with neither the link is plain.
  *
@@ -80,6 +81,7 @@
 #include "max485_module.h"   /* max485-module: the RS485 carrier */
 #include "protocol.h"       /* the generated schema: PowerReading */
 #include "robohub/secure.h"
+#include "key_file.h"
 
 /* The board's id and key, written into this build by Mesh when it planned the
  * board, and tracked by no repository. */
@@ -218,6 +220,7 @@ static void emit_u32(rh_u32 value)
 }
 
 /* Turn a reading into the schema's payload and frame it to the gateway. */
+// @req DEVS-0004, DEVS-NODE-0004
 static RoboHubError publish(RoboHubTransport* transport,
                             const RoboHubPowerReading* reading,
                             rh_u32 timestamp_ms)
@@ -253,57 +256,6 @@ static RoboHubError publish(RoboHubTransport* transport,
 static RoboHubTransport g_transport;
 static RoboHubSecure    g_secure;
 
-static int hex_digit(char c)
-{
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-    return -1;
-}
-
-/* Exactly `n` bytes of hex, ignoring a trailing line break; anything else is
- * refused, so a key file that is short or has a stray character is no key. */
-static rh_bool hex_bytes(const char* text, rh_u8* out, rh_size n)
-{
-    rh_size i = 0u;
-    for (; i < n; i++) {
-        int hi = hex_digit(text[2u * i]);
-        int lo = (hi < 0) ? -1 : hex_digit(text[2u * i + 1u]);
-        if (lo < 0) {
-            return RH_FALSE;
-        }
-        out[i] = (rh_u8)((hi << 4) | lo);
-    }
-    const char* rest = text + 2u * n;
-    while (*rest == '\n' || *rest == '\r') {
-        rest++;
-    }
-    return *rest == '\0';
-}
-
-/* A key file: `<epoch>:<hex>`, or the hex alone (epoch 0, as it was written
- * before keys rotated). */
-static rh_bool key_file_parse(const char* text, rh_u32* epoch, rh_u8* key, rh_size n)
-{
-    *epoch = 0u;
-    const char* colon = strchr(text, ':');
-    if (colon != NULL) {
-        if (colon == text) {
-            return RH_FALSE;
-        }
-        rh_u32 value = 0u;
-        for (const char* p = text; p < colon; p++) {
-            if (*p < '0' || *p > '9' || value > 400000000u) {
-                return RH_FALSE;
-            }
-            value = value * 10u + (rh_u32)(*p - '0');
-        }
-        *epoch = value;
-        text = colon + 1;
-    }
-    return hex_bytes(text, key, n);
-}
-
 #if defined(RH_NODE_KEY_FILE_WRITABLE)
 /* The key file the node read its key from, rewritten when the key is rotated. */
 static char g_key_path[512];
@@ -311,6 +263,7 @@ static char g_key_path[512];
 /* Write the rotated key over the key file: a temporary file beside it, readable
  * by this user alone, flushed to the disk, then renamed over the old one, so the
  * file holds the old key or the new one and never half of either. */
+// @req DEVS-0007, DEVS-NODE-0006
 static int key_file_store(const rh_u8 key[RH_SECURE_KEY_SIZE], rh_u32 epoch, void* user)
 {
     (void)user;
@@ -352,6 +305,7 @@ static rh_u32 node_now_ms(void)
 /* The board's id and key: the build's, else the environment's. Answers whether
  * the link is sealed; a key named but unreadable stops the node rather than
  * letting it fall back to a plain link. */
+// @req DEVS-0006, DEVS-0008, DEVS-NODE-0005
 static int secure_link(void)
 {
     rh_u8 uid[RH_SECURE_UID_SIZE];
@@ -376,19 +330,19 @@ static int secure_link(void)
     if (uid_text[0] == '\0' && key_path[0] == '\0') {
         return 0;
     }
-    char key_text[80] = { 0 };
-    FILE* file = (key_path[0] != '\0') ? fopen(key_path, "r") : NULL;
-    if (file != NULL) {
-        size_t got = fread(key_text, 1u, sizeof(key_text) - 1u, file);
-        key_text[got] = '\0';
-        fclose(file);
-    }
-    if (!hex_bytes(uid_text, uid, sizeof(uid)) || !key_file_parse(key_text, &epoch, key, sizeof(key))) {
-        memset(key_text, 0, sizeof(key_text));
-        emit("robohub-device-node: RH_SECURE_UID or RH_SECURE_KEY_FILE is not a board id and key\n");
+    if (!rh_key_hex_bytes(uid_text, uid, sizeof(uid))) {
+        emit("robohub-device-node: RH_SECURE_UID is not a board id (16 hex digits)\n");
         return -1;
     }
-    memset(key_text, 0, sizeof(key_text));
+    /* The key file must be this user's alone: a key another user can read or
+     * write is not this board's secret (key_file.h). */
+    char why[1280];
+    if (rh_key_file_read(key_path, &epoch, key, sizeof(key), why, sizeof(why)) != RH_KEY_FILE_OK) {
+        emit("robohub-device-node: ");
+        emit(why);
+        emit("\n");
+        return -1;
+    }
 #  if defined(RH_NODE_KEY_FILE_WRITABLE)
     key_file = snprintf(g_key_path, sizeof(g_key_path), "%s", key_path) < (int)sizeof(g_key_path);
     if (!key_file) {
@@ -411,6 +365,7 @@ static int secure_link(void)
     return 1;
 }
 
+// @req DEVS-NODE-0004
 int main(void)
 {
     if (robohub_platform_init() != ROBOHUB_OK) {

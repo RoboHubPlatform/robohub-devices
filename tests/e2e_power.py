@@ -48,6 +48,10 @@ DEV = os.path.dirname(HERE)
 NODE_BIN = os.environ.get(
     "NODE_BIN", os.path.join(DEV, "nodes", "gateway-node", "build", "output", "gateway_node"))
 GATEWAY_BIN = os.environ.get("GATEWAY_BIN")
+# What the test exits with when this machine cannot run it — no gateway binary,
+# or no node build — rather than a failure: the automake convention, which ctest
+# reports as a skip with the reason printed above it.
+CANNOT_RUN_HERE = 77
 HOST = "127.0.0.1"
 AREA = 7
 NODE = 30
@@ -122,15 +126,16 @@ def mint_token(home):
                           check=True, capture_output=True, text=True).stdout.strip()
 
 
+# @verifies DEVS-0004, DEVS-0006, DEVS-NODE-0004, DEVS-NODE-0005, DEVS-INV-0003
 def main():
     global TOKEN
     if not GATEWAY_BIN or not os.path.exists(GATEWAY_BIN):
-        print("set GATEWAY_BIN to the robohub-gateway binary", file=sys.stderr)
-        return 2
+        print("skipped: set GATEWAY_BIN to the robohub-gateway binary", file=sys.stderr)
+        return CANNOT_RUN_HERE
     if not os.path.exists(NODE_BIN):
-        print(f"node binary not found at {NODE_BIN}; build it with "
+        print(f"skipped: node binary not found at {NODE_BIN}; build it with "
               f"`rho build -target native .`", file=sys.stderr)
-        return 2
+        return CANNOT_RUN_HERE
     work = tempfile.mkdtemp(prefix="e2e-power-")
     try:
         TOKEN = mint_token(work)

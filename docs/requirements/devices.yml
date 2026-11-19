@@ -1,0 +1,148 @@
+# What robohub-devices does towards the system requirements: equipment that
+# speaks a protocol of its own (an inverter over Modbus or through an OpenDTU, a
+# Shelly plug, a relay) read into the common device interfaces, and the device
+# node that frames those readings to a gateway and answers its commands. Written
+# in the R5 backfill from the README, the changelog, the code and the host and
+# end-to-end tests; proposed until the maintainer approves them.
+level: NODE
+prefix: DEVS
+title: Devices
+requirements:
+  - id: DEVS-0001
+    title: Equipment is read into the common device interfaces
+    statement: >
+      Each device integration shall present what it reads through the
+      robohub-common interface of its kind — RoboHubInverter for an inverter,
+      RoboHubSwitch for a relay, RoboHubPlug for a smart plug — naming the device
+      by its area and node, with a `valid` mask that marks a figure the device does
+      not have as absent rather than zero.
+    rationale: A Growatt over Modbus and a Hoymiles over HTTP must reach everything above as the same kind of reading, and a missing battery must not read as an empty one.
+    satisfies: [SYS-0001, SYS-0051]
+    decided_by: [ADR-0001]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [devices, interfaces]
+
+  - id: DEVS-0002
+    title: Devices are read locally over their own protocol
+    statement: >
+      The integrations shall read their equipment directly on the local bus or
+      network — Modbus RTU over an RS485 bus, an HTTP GET to an OpenDTU or a
+      Shelly plug, MQTT through the platform's broker client — with no vendor
+      cloud service in between.
+    rationale: An inverter whose figures go through its maker's cloud is not the person's own, and stops when that service does.
+    satisfies: [SYS-0001, SYS-0028, SYS-0051]
+    status: proposed
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [devices, local-first, protocols]
+
+  - id: DEVS-0003
+    title: A failed read is an error, never a number
+    statement: >
+      A protocol client or device integration shall report a device that does
+      not answer as a timeout and a short, malformed, wrongly addressed,
+      exception or checksum-failing answer as a protocol error, and shall then
+      return no reading.
+    rationale: A garbled Modbus reply must not become a battery at 0 % on a chart or a switch shown in a state it is not in.
+    satisfies: [SYS-0047]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [devices, errors]
+
+  - id: DEVS-0004
+    title: A device node publishes its readings as a board's frames
+    statement: >
+      A device node shall publish its devices' readings to a gateway as the
+      robohub-protocol messages a board sends — Telemetry for a temperature,
+      PowerReading for power and energy, StateReading for a switch or setpoint —
+      framed by robohub-transport over a UART or a TCP link, under the area and
+      node it is configured with.
+    rationale: An inverter carried by a device node must appear in the gateway's device listing and its history unchanged, as a board would.
+    satisfies: [SYS-0051]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [device-node, telemetry]
+
+  - id: DEVS-0005
+    title: A command is answered with the state the device reached
+    statement: >
+      A device node shall answer a control request addressed by area and node
+      with the result and the value the device actually reached, read back from
+      the device rather than echoed from the request.
+    rationale: A page must show a heater off only when the relay is off, including when something else changed it.
+    satisfies: [SYS-0025]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [device-node, commands, outputs]
+
+  - id: DEVS-0006
+    title: A device node with a key speaks only sealed frames
+    statement: >
+      A device node given a board id and device key shall seal every frame it
+      sends with robohub-transport's secure link and accept only sealed frames,
+      and a node whose key is named but cannot be read shall stop rather than
+      fall back to a plain link.
+    rationale: The gateway drops plain frames on every network link; a node that silently went plain would be unheard at best and forgeable at worst.
+    satisfies: [SYS-0019, SYS-0020]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [device-node, security]
+
+  - id: DEVS-0007
+    title: A rotated key is kept durably
+    statement: >
+      When its gateway rotates its key, a device node shall keep the new key and
+      epoch durably — in the platform's key store under the build's key scope, or
+      for a host node by rewriting its key file whole, readable by its user only —
+      and open its next session with it.
+    rationale: A rotation the node forgets at its next restart would leave it unheard once the gateway refuses the old epoch.
+    satisfies: [SYS-0022, SYS-0033]
+    status: proposed
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [device-node, security, key-rotation]
+
+  - id: DEVS-0008
+    title: The device key never travels on a command line
+    statement: >
+      A host device node shall take its device key only from the file named by
+      RH_SECURE_KEY_FILE or from the robohub_secret.h built into it, never from
+      an environment value or its command line, and shall clear the key's text
+      from memory once it is parsed.
+    rationale: Any user of the machine can read another's command line; a file can be made owner-only.
+    satisfies: [SYS-0033]
+    status: proposed
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [device-node, security, secrets]
+
+  - id: DEVS-0009
+    title: A device says how it is read and switched, as data
+    statement: >
+      Each device integration the collection lists under `devices:` shall declare
+      in its manifest a `device` block, its telemetry interface (inverter, plug or
+      switch) and, for a device read over HTTP or MQTT, one line per signal of
+      the form `signal|field|unit|type|json/path|scale` and the actions it can be
+      told to do per transport.
+    rationale: Mesh polls an HTTP plug directly and an application switches it without knowing which integration is behind a model; both read this, not the C.
+    satisfies: [SYS-0025, SYS-0028, SYS-0051]
+    decided_by: [ADR-0001]
+    status: proposed
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [devices, manifest, telemetry]

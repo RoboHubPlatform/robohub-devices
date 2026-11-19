@@ -24,6 +24,7 @@
  *   48-49  PV1 energy today 50-51 PV1 total  52-53 PV2 today  54-55 PV2 total
  *
  * Registers 0-101 are read in one request. */
+// @req DEVS-INV-0002
 static const RoboHubGrowattMap growatt_default_map = {
     .base = 0u,
     .count = 102u,
@@ -54,6 +55,7 @@ static rh_bool growatt_has(const RoboHubGrowatt* dev, RoboHubGrowattField field)
 /* The value of one field, or 0 when its registers are outside the block. A
  * 32-bit figure is the high register then the low one; a signed figure is two's
  * complement at its own width. */
+// @req DEVS-INV-0001
 static rh_f32 growatt_field(const RoboHubGrowatt* dev, RoboHubGrowattField field)
 {
     if (!growatt_has(dev, field)) {
@@ -89,6 +91,7 @@ static RoboHubError growatt_op_deinit(RoboHubInverter* self)
     return ROBOHUB_OK;
 }
 
+// @req DEVS-0001, DEVS-INV-0001
 static RoboHubError growatt_op_read(RoboHubInverter* self, RoboHubPowerReading* out)
 {
     RoboHubGrowatt* dev = (RoboHubGrowatt*)self->context;
@@ -146,6 +149,7 @@ static RoboHubError growatt_op_read(RoboHubInverter* self, RoboHubPowerReading* 
 /*  Binding                                                                   */
 /* -------------------------------------------------------------------------- */
 
+// @req DEVS-INV-0001
 RoboHubError robohub_growatt_init(RoboHubGrowatt* dev,
                                   RoboHubModbus* modbus,
                                   RoboHubDeviceId id,
