@@ -2,6 +2,10 @@
 
 All notable changes to this module are recorded here, one section per release.
 
+## [0.8.2] - 2026-11-20
+
+The gateway node's protocol copies know the update messages (robohub-protocol 1.5.0).
+
 ## [0.8.1] - 2026-11-20
 
 The gateway node's protocol copies know `HEALTH` (0x0403) and `ResetReason` (robohub-protocol 1.4.0).

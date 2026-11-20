@@ -42,6 +42,10 @@ typedef enum {
     MESSAGE_ID_DIAG_REQUEST = 1025,
     MESSAGE_ID_DIAG_RESPONSE = 1026,
     MESSAGE_ID_HEALTH = 1027,
+    MESSAGE_ID_UPDATE_OFFER = 1281,
+    MESSAGE_ID_UPDATE_CHUNK = 1282,
+    MESSAGE_ID_UPDATE_STATUS = 1283,
+    MESSAGE_ID_UPDATE_CANCEL = 1284,
 } MessageId;
 
 typedef enum {
@@ -134,6 +138,32 @@ typedef enum {
     POWER_FIELD_ENERGY_TOTAL = 64,
 } PowerField;
 
+typedef enum {
+    UPDATE_STATE_ACCEPTED = 1,
+    UPDATE_STATE_REFUSED = 2,
+    UPDATE_STATE_RECEIVING = 3,
+    UPDATE_STATE_VERIFIED = 4,
+    UPDATE_STATE_CONFIRMED = 5,
+    UPDATE_STATE_ROLLED_BACK = 6,
+    UPDATE_STATE_FAILED = 7,
+} UpdateState;
+
+typedef enum {
+    UPDATE_REASON_NONE = 0,
+    UPDATE_REASON_SIGNATURE = 1,
+    UPDATE_REASON_OTHER_BOARD = 2,
+    UPDATE_REASON_DOWNGRADE = 3,
+    UPDATE_REASON_TOO_LARGE = 4,
+    UPDATE_REASON_NOT_UPDATABLE = 5,
+    UPDATE_REASON_BUSY = 6,
+    UPDATE_REASON_NOT_PROVISIONED = 7,
+    UPDATE_REASON_HASH = 8,
+    UPDATE_REASON_CANCELLED = 9,
+    UPDATE_REASON_TIMEOUT = 10,
+    UPDATE_REASON_WRITE = 11,
+    UPDATE_REASON_BAD_OFFER = 12,
+} UpdateReason;
+
 /* message DeviceId */
 typedef struct __attribute__((packed)) {
     uint16_t area_id;
@@ -184,6 +214,54 @@ typedef struct __attribute__((packed)) {
 #define HEALTH_WIRE_SIZE 30
 size_t Health_serialize(const Health* value, uint8_t* out, size_t capacity);
 bool Health_deserialize(const uint8_t* data, size_t length, Health* out);
+
+/* message UpdateManifest */
+typedef struct __attribute__((packed)) {
+    uint32_t update_id;
+    uint8_t uid[8];
+    uint16_t firmware_version;
+    uint32_t security_version;
+    uint32_t size;
+    uint8_t sha256[32];
+    uint16_t chunk_size;
+} UpdateManifest;
+
+#define UPDATE_MANIFEST_WIRE_SIZE 57
+size_t UpdateManifest_serialize(const UpdateManifest* value, uint8_t* out, size_t capacity);
+bool UpdateManifest_deserialize(const uint8_t* data, size_t length, UpdateManifest* out);
+
+/* message UpdateOffer */
+typedef struct __attribute__((packed)) {
+    UpdateManifest manifest;
+    uint8_t signature[64];
+} UpdateOffer;
+
+#define UPDATE_OFFER_WIRE_SIZE 122
+size_t UpdateOffer_serialize(const UpdateOffer* value, uint8_t* out, size_t capacity);
+bool UpdateOffer_deserialize(const uint8_t* data, size_t length, UpdateOffer* out);
+
+/* message UpdateStatus */
+typedef struct __attribute__((packed)) {
+    uint32_t update_id;
+    UpdateState state;
+    UpdateReason reason;
+    uint32_t next_index;
+    uint16_t running_version;
+    uint8_t running_slot;
+} UpdateStatus;
+
+#define UPDATE_STATUS_WIRE_SIZE 20
+size_t UpdateStatus_serialize(const UpdateStatus* value, uint8_t* out, size_t capacity);
+bool UpdateStatus_deserialize(const uint8_t* data, size_t length, UpdateStatus* out);
+
+/* message UpdateCancel */
+typedef struct __attribute__((packed)) {
+    uint32_t update_id;
+} UpdateCancel;
+
+#define UPDATE_CANCEL_WIRE_SIZE 5
+size_t UpdateCancel_serialize(const UpdateCancel* value, uint8_t* out, size_t capacity);
+bool UpdateCancel_deserialize(const uint8_t* data, size_t length, UpdateCancel* out);
 
 /* message GatewayId */
 typedef struct __attribute__((packed)) {

@@ -181,6 +181,178 @@ bool Health_deserialize(const uint8_t* data, size_t length, Health* out)
     return true;
 }
 
+size_t UpdateManifest_serialize(const UpdateManifest* value, uint8_t* out, size_t capacity)
+{
+    if (value == 0 || out == 0 || capacity < UPDATE_MANIFEST_WIRE_SIZE) {
+        return 0u;
+    }
+    size_t off = 0u;
+    robohub_v1_put_u8(out + off, (uint8_t)1);
+    off += 1u;
+    robohub_v1_put_u32(out + off, (uint32_t)value->update_id);
+    off += 4u;
+    for (size_t i = 0; i < 8u; i++) {
+        robohub_v1_put_u8(out + off, (uint8_t)value->uid[i]);
+        off += 1u;
+    }
+    robohub_v1_put_u16(out + off, (uint16_t)value->firmware_version);
+    off += 2u;
+    robohub_v1_put_u32(out + off, (uint32_t)value->security_version);
+    off += 4u;
+    robohub_v1_put_u32(out + off, (uint32_t)value->size);
+    off += 4u;
+    for (size_t i = 0; i < 32u; i++) {
+        robohub_v1_put_u8(out + off, (uint8_t)value->sha256[i]);
+        off += 1u;
+    }
+    robohub_v1_put_u16(out + off, (uint16_t)value->chunk_size);
+    off += 2u;
+    return off;
+}
+
+bool UpdateManifest_deserialize(const uint8_t* data, size_t length, UpdateManifest* out)
+{
+    if (data == 0 || out == 0 || length < UPDATE_MANIFEST_WIRE_SIZE) {
+        return false;
+    }
+    if (data[0] != (uint8_t)1) {
+        return false;
+    }
+    size_t off = 1u;
+    out->update_id = robohub_v1_get_u32(data + off);
+    off += 4u;
+    for (size_t i = 0; i < 8u; i++) {
+        out->uid[i] = robohub_v1_get_u8(data + off);
+        off += 1u;
+    }
+    out->firmware_version = robohub_v1_get_u16(data + off);
+    off += 2u;
+    out->security_version = robohub_v1_get_u32(data + off);
+    off += 4u;
+    out->size = robohub_v1_get_u32(data + off);
+    off += 4u;
+    for (size_t i = 0; i < 32u; i++) {
+        out->sha256[i] = robohub_v1_get_u8(data + off);
+        off += 1u;
+    }
+    out->chunk_size = robohub_v1_get_u16(data + off);
+    off += 2u;
+    return true;
+}
+
+size_t UpdateOffer_serialize(const UpdateOffer* value, uint8_t* out, size_t capacity)
+{
+    if (value == 0 || out == 0 || capacity < UPDATE_OFFER_WIRE_SIZE) {
+        return 0u;
+    }
+    size_t off = 0u;
+    robohub_v1_put_u8(out + off, (uint8_t)1);
+    off += 1u;
+    if (UpdateManifest_serialize(&value->manifest, out + off, capacity - off) == 0u) {
+        return 0u;
+    }
+    off += UPDATE_MANIFEST_WIRE_SIZE;
+    for (size_t i = 0; i < 64u; i++) {
+        robohub_v1_put_u8(out + off, (uint8_t)value->signature[i]);
+        off += 1u;
+    }
+    return off;
+}
+
+bool UpdateOffer_deserialize(const uint8_t* data, size_t length, UpdateOffer* out)
+{
+    if (data == 0 || out == 0 || length < UPDATE_OFFER_WIRE_SIZE) {
+        return false;
+    }
+    if (data[0] != (uint8_t)1) {
+        return false;
+    }
+    size_t off = 1u;
+    if (!UpdateManifest_deserialize(data + off, length - off, &out->manifest)) {
+        return false;
+    }
+    off += UPDATE_MANIFEST_WIRE_SIZE;
+    for (size_t i = 0; i < 64u; i++) {
+        out->signature[i] = robohub_v1_get_u8(data + off);
+        off += 1u;
+    }
+    return true;
+}
+
+size_t UpdateStatus_serialize(const UpdateStatus* value, uint8_t* out, size_t capacity)
+{
+    if (value == 0 || out == 0 || capacity < UPDATE_STATUS_WIRE_SIZE) {
+        return 0u;
+    }
+    size_t off = 0u;
+    robohub_v1_put_u8(out + off, (uint8_t)1);
+    off += 1u;
+    robohub_v1_put_u32(out + off, (uint32_t)value->update_id);
+    off += 4u;
+    robohub_v1_put_u32(out + off, (uint32_t)value->state);
+    off += 4u;
+    robohub_v1_put_u32(out + off, (uint32_t)value->reason);
+    off += 4u;
+    robohub_v1_put_u32(out + off, (uint32_t)value->next_index);
+    off += 4u;
+    robohub_v1_put_u16(out + off, (uint16_t)value->running_version);
+    off += 2u;
+    robohub_v1_put_u8(out + off, (uint8_t)value->running_slot);
+    off += 1u;
+    return off;
+}
+
+bool UpdateStatus_deserialize(const uint8_t* data, size_t length, UpdateStatus* out)
+{
+    if (data == 0 || out == 0 || length < UPDATE_STATUS_WIRE_SIZE) {
+        return false;
+    }
+    if (data[0] != (uint8_t)1) {
+        return false;
+    }
+    size_t off = 1u;
+    out->update_id = robohub_v1_get_u32(data + off);
+    off += 4u;
+    out->state = (UpdateState)robohub_v1_get_u32(data + off);
+    off += 4u;
+    out->reason = (UpdateReason)robohub_v1_get_u32(data + off);
+    off += 4u;
+    out->next_index = robohub_v1_get_u32(data + off);
+    off += 4u;
+    out->running_version = robohub_v1_get_u16(data + off);
+    off += 2u;
+    out->running_slot = robohub_v1_get_u8(data + off);
+    off += 1u;
+    return true;
+}
+
+size_t UpdateCancel_serialize(const UpdateCancel* value, uint8_t* out, size_t capacity)
+{
+    if (value == 0 || out == 0 || capacity < UPDATE_CANCEL_WIRE_SIZE) {
+        return 0u;
+    }
+    size_t off = 0u;
+    robohub_v1_put_u8(out + off, (uint8_t)1);
+    off += 1u;
+    robohub_v1_put_u32(out + off, (uint32_t)value->update_id);
+    off += 4u;
+    return off;
+}
+
+bool UpdateCancel_deserialize(const uint8_t* data, size_t length, UpdateCancel* out)
+{
+    if (data == 0 || out == 0 || length < UPDATE_CANCEL_WIRE_SIZE) {
+        return false;
+    }
+    if (data[0] != (uint8_t)1) {
+        return false;
+    }
+    size_t off = 1u;
+    out->update_id = robohub_v1_get_u32(data + off);
+    off += 4u;
+    return true;
+}
+
 size_t GatewayId_serialize(const GatewayId* value, uint8_t* out, size_t capacity)
 {
     if (value == 0 || out == 0 || capacity < GATEWAY_ID_WIRE_SIZE) {
