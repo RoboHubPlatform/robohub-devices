@@ -55,9 +55,7 @@ depends:
     branch: main
   - name: robohub-transport
     type: c
-    path: ${ROBOHUB_WORKSPACE}/robohub-transport
-    git: https://github.com/RoboHubPlatform/robohub-transport
-    branch: main
+    path: ${ROBOHUB_WORKSPACE}/robohub-node/link
   - name: max485-module
     type: c
     path: ${ROBOHUB_WORKSPACE}/robohub-drivers/boards/transceiver/max485-module
@@ -89,7 +87,7 @@ c_connection:
     - ${ROBOHUB_WORKSPACE}/robohub-common/include/robohub/hal
     - ${ROBOHUB_WORKSPACE}/robohub-common/include/robohub/drivers
     - ${ROBOHUB_WORKSPACE}/robohub-common/include/robohub/devices
-    - ${ROBOHUB_WORKSPACE}/robohub-transport/include
+    - ${ROBOHUB_WORKSPACE}/robohub-node/link/include
     - ${ROBOHUB_WORKSPACE}/robohub-drivers/boards/transceiver/max485-module/bsp
     - ${ROBOHUB_WORKSPACE}/robohub-devices/protocols/modbus/inc
     - ${ROBOHUB_WORKSPACE}/robohub-devices/protocols/http/inc

@@ -53,7 +53,7 @@ depends:
     branch: main
   - name: robohub-device-node
     type: c
-    path: ${ROBOHUB_WORKSPACE}/robohub-devices/runtime/device-node
+    path: ${ROBOHUB_WORKSPACE}/robohub-node/device-node
   - name: robohub-device-relay
     type: c
     path: ${ROBOHUB_WORKSPACE}/robohub-devices/devices/actuator/relay

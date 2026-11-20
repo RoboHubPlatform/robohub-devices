@@ -14,7 +14,7 @@ module:
   previous_ids:
     - robohub-devices
   type: collection
-  version: 0.7.0
+  version: 0.8.0
   license: "MIT"
   description: >
     Device integrations for the RoboHub Platform: inverters, meters and other
@@ -43,7 +43,6 @@ modules:
   - protocols/mqtt
   - protocols/http
   - protocols/json
-  - runtime/device-node
   - devices/inverter/growatt-es
   - devices/inverter/hoymiles-hms
   - devices/actuator/relay

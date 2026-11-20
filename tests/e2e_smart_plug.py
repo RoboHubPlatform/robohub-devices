@@ -74,7 +74,7 @@ def wait_ready(port, timeout=10.0):
     return False
 
 
-# @verifies DEVS-0004, DEVS-0005, DEVS-APP-0001, DEVS-APP-0002, DEVS-NODE-0001, DEVS-NODE-0002
+# @verifies DEVS-0004, DEVS-0005, DEVS-APP-0001, DEVS-APP-0002, RNODE-DEV-0001, RNODE-DEV-0002
 def main():
     if not GATEWAY_BIN or not os.path.exists(GATEWAY_BIN):
         print("skipped: set GATEWAY_BIN to the robohub-gateway binary", file=sys.stderr)

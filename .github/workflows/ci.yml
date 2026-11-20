@@ -14,4 +14,4 @@ jobs:
     uses: RoboHubPlatform/robohub/.github/workflows/robohub-ci.yml@main
     secrets: inherit
     with:
-      siblings: robohub-common robohub-core robohub-drivers robohub-linux robohub-pico robohub-telemetry robohub-transport
+      siblings: robohub-common robohub-node robohub-drivers robohub-linux robohub-pico

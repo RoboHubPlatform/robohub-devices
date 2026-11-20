@@ -27,8 +27,6 @@ protocols/
     modbus/     Modbus RTU master over the RS485 HAL
     http/       a small HTTP GET over the network contract
     json/       a field reader for a JSON document
-runtime/
-    device-node/    the runtime a device node is built on: link, publish, dispatch
 devices/
     inverter/
         growatt-es/     a Growatt SPH/ES hybrid over Modbus
@@ -130,7 +128,8 @@ actually reached, so a command and the state that follows do not drift.
 ## Custom applications
 
 An application that composes parts that already exist — a sensor here, a relay
-there — is written against the `robohub-device-node` runtime: it supplies what it
+there — is written against the `robohub-device-node` runtime (in
+[robohub-node](https://github.com/RoboHubPlatform/robohub-node), `device-node/`): it supplies what it
 reads and what a command does, and the runtime carries the link, the framing, the
 publishing and the dispatch. `apps/smart-plug` is the example — a DS18B20 and a
 GPIO relay as one switchable, temperature-reporting device — and it builds for a

@@ -45,8 +45,8 @@ an ADC is a part a board reaches through the HAL, so it is a driver in
 
 `protocols/http`, `protocols/json`, `protocols/modbus` and `protocols/mqtt` are
 the protocol clients a network device is built on (MQTT:
-{ref}`robohub-devices-mqtt/index`). `runtime/device-node` is the runtime a
-device's firmware runs on, and `nodes/gateway-node` the node that reads one
+{ref}`robohub-devices-mqtt/index`). The runtime a device's firmware runs on,
+`robohub-device-node`, is in robohub-node (`device-node/`); `nodes/gateway-node` is the node that reads one
 inverter and sends its readings to a gateway.
 
 ## Signals
