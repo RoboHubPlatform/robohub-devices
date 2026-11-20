@@ -41,7 +41,18 @@ typedef enum {
     MESSAGE_ID_CONTROL_RESPONSE = 770,
     MESSAGE_ID_DIAG_REQUEST = 1025,
     MESSAGE_ID_DIAG_RESPONSE = 1026,
+    MESSAGE_ID_HEALTH = 1027,
 } MessageId;
+
+typedef enum {
+    RESET_REASON_UNKNOWN = 0,
+    RESET_REASON_POWER_ON = 1,
+    RESET_REASON_WATCHDOG = 2,
+    RESET_REASON_SOFTWARE = 3,
+    RESET_REASON_BROWN_OUT = 4,
+    RESET_REASON_PIN = 5,
+    RESET_REASON_FAULT = 6,
+} ResetReason;
 
 typedef enum {
     NODE_STATUS_OK = 0,
@@ -157,6 +168,22 @@ typedef struct __attribute__((packed)) {
 #define TELEMETRY_WIRE_SIZE 18
 size_t Telemetry_serialize(const Telemetry* value, uint8_t* out, size_t capacity);
 bool Telemetry_deserialize(const uint8_t* data, size_t length, Telemetry* out);
+
+/* message Health */
+typedef struct __attribute__((packed)) {
+    DeviceId device;
+    ResetReason reset_reason;
+    uint32_t boot_count;
+    uint32_t fault_code;
+    uint16_t fault_task;
+    uint32_t fault_pc;
+    uint32_t fault_uptime_ms;
+    uint16_t firmware_version;
+} Health;
+
+#define HEALTH_WIRE_SIZE 30
+size_t Health_serialize(const Health* value, uint8_t* out, size_t capacity);
+bool Health_deserialize(const uint8_t* data, size_t length, Health* out);
 
 /* message GatewayId */
 typedef struct __attribute__((packed)) {

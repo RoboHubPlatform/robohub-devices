@@ -2,6 +2,10 @@
 
 All notable changes to this module are recorded here, one section per release.
 
+## [0.8.1] - 2026-11-20
+
+The gateway node's protocol copies know `HEALTH` (0x0403) and `ResetReason` (robohub-protocol 1.4.0).
+
 ## [0.8.0] - 2026-11-20
 
 The device-node runtime (`runtime/device-node`, `robohub-device-node`) moved to the robohub-node collection (`device-node/`), with its requirements, renumbered RNODE-DEV-0001..0003 (formerly DEVS-NODE-0001..0003; robohub ADR-0020). `apps/smart-plug`, its test node and `nodes/gateway-node` name it, and robohub-core, -transport and -telemetry, at their new paths in robohub-node; `nodes/gateway-node` stays here, an application of this collection's drivers. CI checks out robohub-node instead of the three repositories.

@@ -122,6 +122,65 @@ bool Telemetry_deserialize(const uint8_t* data, size_t length, Telemetry* out)
     return true;
 }
 
+size_t Health_serialize(const Health* value, uint8_t* out, size_t capacity)
+{
+    if (value == 0 || out == 0 || capacity < HEALTH_WIRE_SIZE) {
+        return 0u;
+    }
+    size_t off = 0u;
+    robohub_v1_put_u8(out + off, (uint8_t)1);
+    off += 1u;
+    if (DeviceId_serialize(&value->device, out + off, capacity - off) == 0u) {
+        return 0u;
+    }
+    off += DEVICE_ID_WIRE_SIZE;
+    robohub_v1_put_u32(out + off, (uint32_t)value->reset_reason);
+    off += 4u;
+    robohub_v1_put_u32(out + off, (uint32_t)value->boot_count);
+    off += 4u;
+    robohub_v1_put_u32(out + off, (uint32_t)value->fault_code);
+    off += 4u;
+    robohub_v1_put_u16(out + off, (uint16_t)value->fault_task);
+    off += 2u;
+    robohub_v1_put_u32(out + off, (uint32_t)value->fault_pc);
+    off += 4u;
+    robohub_v1_put_u32(out + off, (uint32_t)value->fault_uptime_ms);
+    off += 4u;
+    robohub_v1_put_u16(out + off, (uint16_t)value->firmware_version);
+    off += 2u;
+    return off;
+}
+
+bool Health_deserialize(const uint8_t* data, size_t length, Health* out)
+{
+    if (data == 0 || out == 0 || length < HEALTH_WIRE_SIZE) {
+        return false;
+    }
+    if (data[0] != (uint8_t)1) {
+        return false;
+    }
+    size_t off = 1u;
+    if (!DeviceId_deserialize(data + off, length - off, &out->device)) {
+        return false;
+    }
+    off += DEVICE_ID_WIRE_SIZE;
+    out->reset_reason = (ResetReason)robohub_v1_get_u32(data + off);
+    off += 4u;
+    out->boot_count = robohub_v1_get_u32(data + off);
+    off += 4u;
+    out->fault_code = robohub_v1_get_u32(data + off);
+    off += 4u;
+    out->fault_task = robohub_v1_get_u16(data + off);
+    off += 2u;
+    out->fault_pc = robohub_v1_get_u32(data + off);
+    off += 4u;
+    out->fault_uptime_ms = robohub_v1_get_u32(data + off);
+    off += 4u;
+    out->firmware_version = robohub_v1_get_u16(data + off);
+    off += 2u;
+    return true;
+}
+
 size_t GatewayId_serialize(const GatewayId* value, uint8_t* out, size_t capacity)
 {
     if (value == 0 || out == 0 || capacity < GATEWAY_ID_WIRE_SIZE) {
